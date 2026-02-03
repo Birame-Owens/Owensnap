@@ -1,0 +1,663 @@
+/* ==================== KIOSK CONTAINER ==================== */
+.kiosk-container {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* ==================== HEADER ==================== */
+.kiosk-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 30px 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 4px solid #667eea;
+}
+
+.header-content h1.logo {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+}
+
+.header-content .tagline {
+  margin: 5px 0 0 0;
+  color: #666;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.btn-back {
+  padding: 12px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-back:hover {
+  background: #764ba2;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+}
+
+/* ==================== MAIN CONTENT ==================== */
+.kiosk-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* ==================== SETUP SECTION ==================== */
+.setup-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: 40px;
+}
+
+.setup-card {
+  background: white;
+  border-radius: 24px;
+  padding: 60px;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.setup-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.setup-card h2 {
+  font-size: 36px;
+  font-weight: 800;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.setup-card p {
+  color: #666;
+  font-size: 18px;
+  margin: 0 0 40px 0;
+  line-height: 1.5;
+}
+
+/* ==================== INPUT GROUP ==================== */
+.input-group {
+  margin-bottom: 30px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.input-code {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.input-code:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+/* ==================== BUTTONS ==================== */
+.btn-primary {
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:hover:before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
+}
+
+.btn-large {
+  width: 100%;
+  padding: 20px 32px;
+  font-size: 20px;
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #d0d0d0;
+}
+
+/* ==================== CAMERA SECTION ==================== */
+.camera-section {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.6s ease-out;
+}
+
+.video-wrapper {
+  margin-bottom: 30px;
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1a1a1a;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+  background: #1a1a1a;
+}
+
+.face-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+}
+
+.circle-guide {
+  width: 300px;
+  height: 300px;
+  border: 4px solid rgba(102, 126, 234, 0.6);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  box-shadow: 0 0 40px rgba(102, 126, 234, 0.4), inset 0 0 40px rgba(102, 126, 234, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 40px rgba(102, 126, 234, 0.4), inset 0 0 40px rgba(102, 126, 234, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 60px rgba(102, 126, 234, 0.6), inset 0 0 60px rgba(102, 126, 234, 0.3);
+  }
+}
+
+.face-guide p {
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.btn-capture {
+  min-width: 280px;
+}
+
+/* ==================== ERROR BOX ==================== */
+.error-box {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  margin: 30px auto;
+  max-width: 800px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+  animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== RESULTS SECTION ==================== */
+.results-section {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.6s ease-out;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.results-header h2 {
+  margin: 0;
+  font-size: 32px;
+  color: #333;
+  font-weight: 800;
+}
+
+.selection-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ==================== PHOTOS GRID ==================== */
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+  .photos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .photos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== PHOTO CARD ==================== */
+.photo-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f9f9f9;
+  border: 3px solid transparent;
+}
+
+.photo-card:hover {
+  transform: translateY(-8px);
+}
+
+.photo-card.selected {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  box-shadow: 0 0 30px rgba(102, 126, 234, 0.2);
+}
+
+.photo-wrapper {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.photo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.photo-card:hover .photo-image {
+  transform: scale(1.08);
+}
+
+.photo-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 15px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  flex-direction: column;
+}
+
+.photo-card:hover .photo-overlay {
+  opacity: 1;
+}
+
+.confidence-badge {
+  background: rgba(102, 126, 234, 0.95);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 18px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.photo-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn:hover {
+  background: white;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.download-btn {
+  background: rgba(76, 175, 80, 0.95);
+}
+
+.download-btn:hover {
+  background: #4CAF50;
+  color: white;
+}
+
+.print-btn {
+  background: rgba(33, 150, 243, 0.95);
+}
+
+.print-btn:hover {
+  background: #2196F3;
+  color: white;
+}
+
+.checkbox-overlay {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  z-index: 5;
+}
+
+.photo-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+/* ==================== BULK DOWNLOAD ==================== */
+.bulk-download {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 16px;
+  border: 2px dashed #667eea;
+}
+
+.btn-bulk {
+  min-width: 300px;
+  font-size: 18px;
+  padding: 18px 40px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .kiosk-header {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .header-content h1.logo {
+    font-size: 32px;
+  }
+
+  .setup-card {
+    padding: 40px 20px;
+  }
+
+  .setup-icon {
+    font-size: 60px;
+  }
+
+  .setup-card h2 {
+    font-size: 28px;
+  }
+
+  .camera-section {
+    padding: 20px;
+  }
+
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .camera-controls {
+    flex-direction: column;
+  }
+
+  .btn-capture {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .btn-secondary {
+    width: 100%;
+  }
+
+  .bulk-download {
+    padding: 20px;
+  }
+
+  .btn-bulk {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .circle-guide {
+    width: 200px;
+    height: 200px;
+  }
+
+  .kiosk-main {
+    padding: 20px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kiosk-header {
+    padding: 15px;
+  }
+
+  .header-content h1.logo {
+    font-size: 24px;
+  }
+
+  .header-content .tagline {
+    font-size: 14px;
+  }
+
+  .setup-card {
+    padding: 30px 15px;
+  }
+
+  .setup-card h2 {
+    font-size: 22px;
+  }
+
+  .setup-card p {
+    font-size: 16px;
+  }
+
+  .results-section {
+    padding: 20px;
+  }
+
+  .results-header h2 {
+    font-size: 24px;
+  }
+
+  .circle-guide {
+    width: 150px;
+    height: 150px;
+  }
+
+  .face-guide p {
+    font-size: 16px;
+  }
+
+  .confidence-badge {
+    font-size: 16px;
+    padding: 6px 12px;
+  }
+
+  .download-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+}

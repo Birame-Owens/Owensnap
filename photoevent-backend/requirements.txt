@@ -1,0 +1,53 @@
+# Backend PhotoEvent - Dépendances Python
+
+# Framework Web
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Base de données
+pymongo==4.6.1
+motor==3.3.2  # MongoDB async
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.25
+
+# Traitement images & IA
+opencv-python==4.9.0.80
+numpy==1.26.3
+pillow==10.2.0
+
+# ⭐ Reconnaissance Faciale
+# RECOMMANDÉ : InsightFace (ArcFace) - 99% précision
+insightface==0.7.3
+onnxruntime-gpu==1.17.0  # Accélération GPU (sinon onnxruntime)
+
+# FALLBACK : DeepFace (FaceNet512) - 95% précision
+deepface==0.0.92
+tensorflow==2.15.0  # Pour DeepFace
+
+# MediaPipe (ancien, à supprimer progressivement)
+mediapipe==0.10.9
+
+# Workers & Cache
+celery==5.3.6
+redis==5.0.1
+
+# Stockage S3
+boto3==1.34.28
+
+# Sécurité & Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+
+# Utilitaires
+qrcode[pil]==7.4.2
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dateutil==2.8.2
+
+# WebSockets
+websockets==12.0
+
+# Augmentation de données (optionnel, pour améliorer précision)
+imgaug==0.4.0

@@ -1,0 +1,4 @@
+# Dépendances POC PhotoEvent
+opencv-python
+mediapipe
+numpy
