@@ -1,6 +1,6 @@
 """
 Application principale FastAPI - PhotoEvent Backend
-Point d'entrée de l'API
+Point d'entrée de l'API avec sécurité avancée
 """
 
 from fastapi import FastAPI
@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
+from app.middleware.rate_limiter import rate_limit_middleware
 from pathlib import Path
 
 # Créer l'application
@@ -27,6 +28,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Ajouter le middleware de rate limiting
+app.middleware("http")(rate_limit_middleware)
 
 
 @app.get("/")
@@ -55,6 +59,7 @@ async def api_root():
     return {
         "message": "PhotoEvent API v1",
         "endpoints": {
+            "auth": f"{settings.API_PREFIX}/auth",
             "events": f"{settings.API_PREFIX}/events",
             "photos": f"{settings.API_PREFIX}/photos",
             "search": f"{settings.API_PREFIX}/search",
@@ -64,7 +69,8 @@ async def api_root():
 
 
 # Import des routers
-from app.api import events, photos, search, orders
+from app.api import events, photos, search, orders, auth
+app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["auth"])
 app.include_router(events.router, prefix=f"{settings.API_PREFIX}/events", tags=["events"])
 app.include_router(photos.router, prefix=f"{settings.API_PREFIX}/photos", tags=["photos"])
 app.include_router(search.router, prefix=f"{settings.API_PREFIX}/search", tags=["search"])
