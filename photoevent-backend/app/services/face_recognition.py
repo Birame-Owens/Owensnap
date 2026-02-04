@@ -9,24 +9,44 @@ from typing import List, Tuple, Optional, Dict
 import base64
 import tempfile
 import os
-
-# Essayer InsightFace d'abord (meilleur modèle)
-try:
-    import insightface
-    INSIGHTFACE_AVAILABLE = True
-except ImportError:
-    INSIGHTFACE_AVAILABLE = False
-    print("⚠️ InsightFace non installé. Utilisez: pip install insightface onnxruntime-gpu")
-
-# Fallback sur DeepFace
-try:
-    from deepface import DeepFace
-    DEEPFACE_AVAILABLE = True
-except ImportError:
-    DEEPFACE_AVAILABLE = False
-    print("⚠️ DeepFace non installé. Utilisez: pip install deepface tensorflow")
+import warnings
 
 from app.core.config import settings
+
+# Essayer InsightFace d'abord (meilleur modèle) - LAZY LOADED
+INSIGHTFACE_AVAILABLE = False
+insightface = None
+
+# Fallback sur DeepFace - LAZY LOADED
+DEEPFACE_AVAILABLE = False
+DeepFace = None
+
+def _load_insightface():
+    """Lazy load InsightFace pour ne pas bloquer le démarrage"""
+    global INSIGHTFACE_AVAILABLE, insightface
+    if INSIGHTFACE_AVAILABLE or insightface is not None:
+        return INSIGHTFACE_AVAILABLE
+    try:
+        import insightface as ifx
+        insightface = ifx
+        INSIGHTFACE_AVAILABLE = True
+        return True
+    except ImportError:
+        INSIGHTFACE_AVAILABLE = False
+        return False
+
+def _load_deepface():
+    """Lazy load DeepFace pour ne pas bloquer le démarrage"""
+    global DEEPFACE_AVAILABLE, DeepFace
+    if DEEPFACE_AVAILABLE or DeepFace is not None:
+        return DEEPFACE_AVAILABLE
+    try:
+        from deepface import DeepFace
+        DEEPFACE_AVAILABLE = True
+        return True
+    except ImportError:
+        DEEPFACE_AVAILABLE = False
+        return False
 
 
 def normalize_embedding(embedding: List[float]) -> List[float]:
@@ -303,7 +323,11 @@ def get_face_service() -> FaceRecognitionService:
     """Obtenir l'instance du service de reconnaissance faciale"""
     global _face_service
     if _face_service is None:
-        if DEEPFACE_AVAILABLE:
+        # Charger les modèles lazy-loaded
+        _load_insightface()
+        _load_deepface()
+        
+        if INSIGHTFACE_AVAILABLE or DEEPFACE_AVAILABLE:
             _face_service = FaceRecognitionService()
         else:
             raise ImportError("DeepFace requis. Installez: pip install deepface")

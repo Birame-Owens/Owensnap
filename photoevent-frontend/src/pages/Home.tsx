@@ -11,7 +11,7 @@ function Home() {
         <p className="subtitle">Reconnaissance faciale pour retrouver vos photos</p>
         
         <div className="home-cards">
-          <div className="home-card photographer-card" onClick={() => navigate('/dashboard')}>
+          <div className="home-card photographer-card" onClick={() => navigate('/login')}>
             <div className="card-icon">📸</div>
             <h2>Espace Photographe</h2>
             <p>Gérer vos événements et uploader vos photos</p>

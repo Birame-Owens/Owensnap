@@ -1,6 +1,7 @@
 """
 Application principale FastAPI - PhotoEvent Backend
 Point d'entrée de l'API avec sécurité avancée
+Les modèles de reconnaissance faciale sont lazy-loaded
 """
 
 from fastapi import FastAPI
@@ -10,6 +11,11 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.middleware.rate_limiter import rate_limit_middleware
 from pathlib import Path
+import sys
+
+# Désactiver les avertissements TensorFlow
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # Créer l'application
 app = FastAPI(
@@ -84,9 +90,12 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 if __name__ == "__main__":
     import uvicorn
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     uvicorn.run(
         "main:app",
         host=settings.HOST,
         port=settings.PORT,
-        reload=settings.DEBUG
+        reload=False,  # Désactiver le reload pour éviter les problèmes au démarrage
+        log_level="debug"
     )

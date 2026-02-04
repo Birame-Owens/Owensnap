@@ -12,7 +12,7 @@ class AuthRequest(BaseModel):
     """Requête d'authentification"""
     username: str
     password: str
-    event_id: str
+    event_id: str = "temp"  # Optionnel, sera défini au Kiosk/Dashboard
 
 class TokenResponse(BaseModel):
     """Réponse avec le token"""
