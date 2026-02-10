@@ -71,12 +71,18 @@ class RateLimiter:
                     del self.requests[ip]
 
 # Instance globale du rate limiter
-rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
+# Limites: 100 requêtes par minute par IP (bien plus que 10 pour laisser de la flexibilité)
+rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
 
 async def rate_limit_middleware(request: Request, call_next):
     """
     Middleware pour appliquer le rate limiting
+    N'applique PAS le rate limiting aux fichiers statiques (/uploads/)
     """
+    # EXCLURE les fichiers statiques du rate limiting
+    if request.url.path.startswith("/uploads/"):
+        return await call_next(request)
+    
     # Obtenir l'IP du client
     client_ip = request.client.host if request.client else "unknown"
     

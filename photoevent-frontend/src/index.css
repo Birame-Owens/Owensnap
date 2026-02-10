@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   margin: 0;
   padding: 0;
@@ -14,3 +18,22 @@ body {
 #root {
   min-height: 100vh;
 }
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg font-semibold hover:shadow-lg transition-all;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-all;
+  }
+
+  .form-input {
+    @apply px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 transition-all;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow hover:shadow-lg transition-all;
+  }
+}
+

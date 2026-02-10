@@ -22,6 +22,7 @@ function Kiosk() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.20)
 
   // Effet pour attacher le stream à la vidéo
   useEffect(() => {
@@ -124,16 +125,17 @@ function Kiosk() {
       const response = await axios.post('/api/v1/search/face', {
         event_id: event.id,
         face_image: imageBase64,
-        threshold: 0.40
+        threshold: 0.15
       })
 
-      const bestMatches = response.data.matches.filter((m: SearchResult) => m.similarity >= 0.45)
-      bestMatches.sort((a: SearchResult, b: SearchResult) => b.similarity - a.similarity)
+      // Afficher TOUS les résultats trouvés, triés par similarité
+      const allMatches = response.data.matches
+      allMatches.sort((a: SearchResult, b: SearchResult) => b.similarity - a.similarity)
 
-      setSearchResults(bestMatches)
+      setSearchResults(allMatches)
       setSelectedPhotos(new Set())
       
-      if (bestMatches.length === 0) {
+      if (allMatches.length === 0) {
         setError('⚠️ Aucune photo trouvée. Assurez-vous d\'être bien face à la caméra avec un bon éclairage.')
       }
     } catch (error: any) {
@@ -170,7 +172,7 @@ function Kiosk() {
 
   const downloadPhoto = (filename: string) => {
     const link = document.createElement('a')
-    link.href = `http://localhost:8000/uploads/photos/${filename}`
+    link.href = `/uploads/photos/${filename}`
     link.download = filename
     document.body.appendChild(link)
     link.click()
@@ -178,7 +180,7 @@ function Kiosk() {
   }
 
   const printPhoto = (filename: string) => {
-    const url = `http://localhost:8000/uploads/photos/${filename}`
+    const url = `/uploads/photos/${filename}`
     const printWindow = window.open(url, '_blank')
     if (printWindow) {
       printWindow.onload = () => {
@@ -276,14 +278,35 @@ function Kiosk() {
         {searchResults.length > 0 && (
           <section className="results-section">
             <div className="results-header">
-              <h2>✅ {searchResults.length} photo{searchResults.length > 1 ? 's' : ''} trouvée{searchResults.length > 1 ? 's' : ''}</h2>
+              <div>
+                <h2>✅ {searchResults.length} photo{searchResults.length > 1 ? 's' : ''} trouvée{searchResults.length > 1 ? 's' : ''}</h2>
+                <p style={{fontSize: '0.9em', color: '#666', marginTop: '8px'}}>Ajustez le curseur pour filtrer par similarité</p>
+              </div>
               {selectedPhotos.size > 0 && (
                 <div className="selection-badge">{selectedPhotos.size} sélectionnée{selectedPhotos.size > 1 ? 's' : ''}</div>
               )}
             </div>
 
+            <div style={{padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '8px', marginBottom: '20px'}}>
+              <label style={{display: 'block', marginBottom: '10px', fontWeight: 'bold'}}>
+                Seuil de similarité: {(similarityThreshold * 100).toFixed(0)}%
+              </label>
+              <input 
+                type="range" 
+                min="0.1" 
+                max="1" 
+                step="0.05" 
+                value={similarityThreshold}
+                onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value))}
+                style={{width: '100%', cursor: 'pointer'}}
+              />
+              <p style={{fontSize: '0.85em', color: '#666', marginTop: '8px'}}>
+                Affichage: {searchResults.filter(r => r.similarity >= similarityThreshold).length} photo{searchResults.filter(r => r.similarity >= similarityThreshold).length !== 1 ? 's' : ''} correspondant{searchResults.filter(r => r.similarity >= similarityThreshold).length !== 1 ? 'es' : ''}
+              </p>
+            </div>
+
             <div className="photos-grid">
-              {searchResults.map((result) => (
+              {searchResults.filter(r => r.similarity >= similarityThreshold).map((result) => (
                 <div 
                   key={result.photo_id} 
                   className={`photo-card ${selectedPhotos.has(result.photo_id) ? 'selected' : ''}`}
@@ -291,7 +314,7 @@ function Kiosk() {
                 >
                   <div className="photo-wrapper">
                     <img 
-                      src={`http://localhost:8000/uploads/photos/${result.filename}`}
+                      src={`/uploads/photos/${result.filename}`}
                       alt="Photo trouvée"
                       className="photo-image"
                       onError={(e) => {

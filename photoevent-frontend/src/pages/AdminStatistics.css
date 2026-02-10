@@ -1,0 +1,363 @@
+.statistics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* ==================== METRICS GRID ==================== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 25px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.metric-card:nth-child(2) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+}
+
+.metric-card:nth-child(2):hover {
+  box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+}
+
+.metric-card:nth-child(3) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+.metric-card:nth-child(3):hover {
+  box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+}
+
+.metric-card:nth-child(4) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.3);
+}
+
+.metric-card:nth-child(4):hover {
+  box-shadow: 0 8px 20px rgba(67, 233, 123, 0.4);
+}
+
+.metric-value {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 14px;
+  opacity: 0.95;
+  font-weight: 500;
+}
+
+/* ==================== SECTIONS ==================== */
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section h3 {
+  margin: 0 0 25px 0;
+  font-size: 20px;
+  color: #333;
+}
+
+/* ==================== TABLE ==================== */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  background: #f5f7fa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.data-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: all 0.3s;
+}
+
+.data-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.data-table td {
+  padding: 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+.event-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.event-code {
+  background: #667eea;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.count-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.filename {
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+/* ==================== CHART ==================== */
+.chart-container {
+  margin: 20px 0;
+}
+
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 16px;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 15px;
+  height: 300px;
+  padding: 20px 10px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+}
+
+.bar-label {
+  order: 3;
+  margin-top: 10px;
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.bar-wrapper {
+  order: 2;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bar {
+  width: 70%;
+  max-width: 60px;
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bar:hover {
+  transform: scaleY(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bar-value {
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  padding-bottom: 8px;
+}
+
+/* ==================== SUMMARY ==================== */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.summary-item {
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.summary-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.summary-stat {
+  font-size: 28px;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #999;
+  font-weight: 500;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bar-chart {
+    height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-page {
+    padding: 15px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .section {
+    padding: 20px;
+  }
+
+  .metric-card {
+    padding: 20px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+  }
+
+  .metric-label {
+    font-size: 13px;
+  }
+
+  .table-wrapper {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .bar-chart {
+    gap: 8px;
+    height: 200px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .section h3 {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .data-table {
+    font-size: 12px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 8px;
+  }
+
+  .event-code {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .count-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .bar-chart {
+    gap: 6px;
+  }
+
+  .bar-label {
+    font-size: 11px;
+  }
+
+  .summary-stat {
+    font-size: 22px;
+  }
+
+  .summary-label {
+    font-size: 12px;
+  }
+}

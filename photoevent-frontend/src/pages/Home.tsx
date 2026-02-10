@@ -11,6 +11,13 @@ function Home() {
         <p className="subtitle">Reconnaissance faciale pour retrouver vos photos</p>
         
         <div className="home-cards">
+          <div className="home-card admin-card" onClick={() => navigate('/admin/login')}>
+            <div className="card-icon">🔐</div>
+            <h2>Espace Admin</h2>
+            <p>Gérer les événements et les photos</p>
+            <button className="card-button">Accéder</button>
+          </div>
+
           <div className="home-card photographer-card" onClick={() => navigate('/login')}>
             <div className="card-icon">📸</div>
             <h2>Espace Photographe</h2>
@@ -22,6 +29,13 @@ function Home() {
             <div className="card-icon">🔍</div>
             <h2>Retrouver Mes Photos</h2>
             <p>Cherchez et téléchargez vos photos en direct</p>
+            <button className="card-button">Accéder</button>
+          </div>
+
+          <div className="home-card gallery-card" onClick={() => navigate('/gallery')}>
+            <div className="card-icon">🎞️</div>
+            <h2>Galerie Complète</h2>
+            <p>Visualisez toutes les photos d'un événement</p>
             <button className="card-button">Accéder</button>
           </div>
         </div>
