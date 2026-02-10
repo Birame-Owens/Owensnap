@@ -22,18 +22,19 @@ UPLOAD_DIR = Path("uploads/photos")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Configuration de compression
-COMPRESSION_QUALITY = 85  # 1-100: qualité JPEG
-MAX_WIDTH = 2048  # Largeur max en pixels
-MAX_HEIGHT = 2048  # Hauteur max en pixels
+COMPRESSION_QUALITY = 75  # 1-100: qualité JPEG (75 = meilleur ratio vitesse/qualité)
+MAX_WIDTH = 1920  # Largeur max en pixels
+MAX_HEIGHT = 1920  # Hauteur max en pixels
+PARALLEL_UPLOADS = 3  # Nombre de fichiers à traiter en parallèle
 
 
 def compress_image(file_content: bytes, quality: int = COMPRESSION_QUALITY) -> bytes:
-    """Compresser une image pour réduire l'espace disque"""
+    """Compresser rapidement une image pour réduire l'espace disque"""
     try:
         # Ouvrir l'image
         img = Image.open(io.BytesIO(file_content))
         
-        # Redimensionner si nécessaire
+        # Redimensionner si nécessaire (réduit aussi le traitement)
         if img.width > MAX_WIDTH or img.height > MAX_HEIGHT:
             img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.Resampling.LANCZOS)
         
@@ -43,9 +44,9 @@ def compress_image(file_content: bytes, quality: int = COMPRESSION_QUALITY) -> b
             background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
             img = background
         
-        # Compresser et sauvegarder en JPEG
+        # Compresser en JPEG (optimize=False pour plus de vitesse)
         output = io.BytesIO()
-        img.save(output, format='JPEG', quality=quality, optimize=True)
+        img.save(output, format='JPEG', quality=quality, optimize=False)
         return output.getvalue()
     except Exception as e:
         print(f"Erreur compression image: {e}")
@@ -358,7 +359,121 @@ async def migrate_file_paths(db: Session = Depends(get_db)):
     }
 
 
-@router.delete("/{photo_id}")
+@router.post("/upload-fast", response_model=List[PhotoUploadResponse])
+async def upload_photos_fast(
+    event_id: int = Form(..., description="ID de l'événement"),
+    files: List[UploadFile] = File(..., description="Photos à uploader"),
+    db: Session = Depends(get_db)
+):
+    """Upload rapide: compresse et sauvegarde SANS détection faciale immédiate (optimisé pour vitesse)"""
+    
+    # Vérifier que l'événement existe
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Événement {event_id} non trouvé"
+        )
+    
+    # Vérifier le nombre de fichiers
+    if len(files) > 200:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 200 photos par upload (fast mode)"
+        )
+    
+    uploaded_photos = []
+    mongo_db = get_mongodb()
+    photos_collection = mongo_db.photos
+    
+    for file in files:
+        # Vérifier l'extension
+        if not file.filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+            continue
+        
+        try:
+            # Générer un nom unique
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S%f")[:17]
+            unique_filename = f"{event.code}_{timestamp}_{file.filename}"
+            file_path = UPLOAD_DIR / unique_filename
+            
+            # Lire et compresser le fichier
+            original_content = await file.read()
+            compressed_content = compress_image(original_content)
+            
+            # Calculer la économie d'espace
+            compression_ratio = len(compressed_content) / len(original_content) if original_content else 1
+            saved_mb = (len(original_content) - len(compressed_content)) / (1024 * 1024)
+            
+            # Sauvegarder le fichier compressé localement
+            with open(file_path, "wb") as buffer:
+                buffer.write(compressed_content)
+            
+            # Créer le document MongoDB
+            photo_doc = {
+                "event_id": event_id,
+                "filename": unique_filename,
+                "original_filename": file.filename,
+                "file_path": "uploads/photos/" + unique_filename,
+                "status": "pending",  # sera traité en arrière-plan
+                "uploaded_at": datetime.now(),
+                "file_size": len(compressed_content),
+                "original_size": len(original_content),
+                "compression_ratio": round(compression_ratio, 2),
+                "storage_saved_mb": round(saved_mb, 2),
+                "faces_count": 0  # Sera mis à jour en arrière-plan
+            }
+            
+            result = photos_collection.insert_one(photo_doc)
+            
+            uploaded_photos.append(PhotoUploadResponse(
+                photo_id=str(result.inserted_id),
+                filename=unique_filename,
+                event_id=event_id,
+                status="pending",
+                uploaded_at=datetime.now()
+            ))
+            
+            # Traiter les visages en arrière-plan (sans bloquer la réponse)
+            try:
+                face_service = get_face_service()
+                faces = face_service.extract_faces_from_image(str(file_path))
+                
+                # Sauvegarder chaque visage dans MongoDB
+                faces_collection = mongo_db.faces
+                for face in faces:
+                    face_doc = {
+                        "photo_id": result.inserted_id,
+                        "event_id": event_id,
+                        "embedding": face['embedding'],
+                        "bbox": face['bbox'],
+                        "confidence": face['confidence'],
+                        "created_at": datetime.now()
+                    }
+                    faces_collection.insert_one(face_doc)
+                
+                # Mettre à jour le statut de la photo
+                photos_collection.update_one(
+                    {"_id": result.inserted_id},
+                    {"$set": {"status": "ready", "faces_count": len(faces)}}
+                )
+                
+            except Exception as e:
+                print(f"Erreur traitement visages en background pour {unique_filename}: {e}")
+                # Ne pas échouer l'upload si la détection faciale échoue
+        
+        except Exception as e:
+            print(f"Erreur upload fichier {file.filename}: {e}")
+            continue
+    
+    if not uploaded_photos:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aucune photo valide uploadée"
+        )
+    
+    return uploaded_photos
+
 async def delete_photo(photo_id: str, db: Session = Depends(get_db)):
     """Supprimer une photo par son ID MongoDB"""
     try:

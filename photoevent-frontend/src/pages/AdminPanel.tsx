@@ -148,28 +148,43 @@ export default function AdminPanel() {
     setUploading(true);
     setMessage(null);
 
-    const formData = new FormData();
-    formData.append('event_id', String(selectedEvent));
-    fileArray.forEach((file) => {
-      formData.append('files', file);
-    });
-
     try {
-      const res = await axios.post(`${API_BASE}/photos/upload`, formData, {
-        onUploadProgress: (progressEvent) => {
-          const progress = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setUploadProgress((prev) => ({ ...prev, upload: progress }));
-        },
-      });
+      // Upload en parallèle par lots de 3 via endpoint optimisé
+      const BATCH_SIZE = 3;
+      let uploadedCount = 0;
 
-      setMessage({ type: 'success', text: `${fileArray.length} photo(s) uploadées ✓` });
+      for (let i = 0; i < fileArray.length; i += BATCH_SIZE) {
+        const batch = fileArray.slice(i, i + BATCH_SIZE);
+
+        // Créer les requêtes pour ce lot
+        const uploadPromises = batch.map((file) => {
+          const formData = new FormData();
+          formData.append('event_id', String(selectedEvent));
+          formData.append('files', file);
+
+          return axios.post(`${API_BASE}/photos/upload-fast`, formData);
+        });
+
+        // Attendre que toutes les requêtes du lot se terminent
+        try {
+          const results = await Promise.all(uploadPromises);
+          uploadedCount += results.reduce((count, res) => count + (res.data?.length || 0), 0);
+
+          // Mise à jour de la progression
+          const progress = Math.round((uploadedCount / fileArray.length) * 100);
+          setUploadProgress({ upload: progress });
+        } catch (batchError) {
+          console.error('Erreur batch upload:', batchError);
+        }
+      }
+
+      setMessage({ type: 'success', text: `${uploadedCount} photo(s) uploadées ✓ (Faces détection en arrière-plan)` });
       setUploadProgress({});
 
+      // Recharger les photos
       const photosRes = await axios.get(`${API_BASE}/photos/event/${selectedEvent}`);
       setPhotos(photosRes.data.photos || []);
-      addActivity(`${fileArray.length} photo(s) uploadée(s) pour l'événement`);
+      addActivity(`${uploadedCount} photo(s) uploadée(s) en parallèle (mode rapide)`);
     } catch (error: any) {
       setMessage({
         type: 'error',
