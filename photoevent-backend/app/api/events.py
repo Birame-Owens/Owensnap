@@ -4,7 +4,7 @@ Routes API pour la gestion des événements
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from app.schemas import EventCreate, EventUpdate, EventResponse, EventListResponse
 from app.db.models import Event
 from app.database import get_db, get_mongodb
@@ -93,7 +93,15 @@ async def get_event(event_id: int, db: Session = Depends(get_db)):
 @router.get("/code/{event_code}", response_model=EventResponse)
 async def get_event_by_code(event_code: str, db: Session = Depends(get_db)):
     """Récupérer un événement par code"""
-    event = db.query(Event).filter(Event.code == event_code).first()
+    # Normaliser le code en majuscules
+    code_normalized = event_code.upper().strip()
+    event = db.query(Event).filter(Event.code == code_normalized).first()
+    
+    if not event:
+        # Fallback: chercher avec insensibilité à la casse en base de données
+        event = db.query(Event).filter(
+            func.upper(Event.code) == code_normalized
+        ).first()
     
     if not event:
         raise HTTPException(

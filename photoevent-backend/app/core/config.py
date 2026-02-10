@@ -81,7 +81,7 @@ class Settings(BaseSettings):
     MAX_DOWNLOADS_PER_LINK: int = 10
     
     # CORS - peut être string CSV ou list
-    CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"]
     
     @model_validator(mode='before')
     @classmethod

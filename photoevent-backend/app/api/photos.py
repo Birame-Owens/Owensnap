@@ -521,3 +521,160 @@ async def delete_photo(photo_id: str, db: Session = Depends(get_db)):
         "deleted": result.deleted_count > 0,
         "message": "Photo supprimée avec succès"
     }
+
+
+@router.get("/{photo_id}/download-hq")
+async def download_photo_high_quality(photo_id: str):
+    """
+    Télécharger une photo en haute qualité (85% JPEG, aucune dégradation)
+    Utilisé pour les galeries partagées
+    """
+    from fastapi.responses import FileResponse
+    
+    try:
+        mongo_id = ObjectId(photo_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"ID de photo invalide: {str(e)}"
+        )
+    
+    mongo_db = get_mongodb()
+    photos_collection = mongo_db.photos
+    
+    # Trouver la photo
+    photo = photos_collection.find_one({"_id": mongo_id})
+    if not photo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Photo {photo_id} non trouvée"
+        )
+    
+    # Récupérer le chemin du fichier
+    file_path_str = photo.get("file_path", "")
+    if not file_path_str:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier photo introuvable"
+        )
+    
+    # Construire le chemin absolu
+    file_path = Path(file_path_str)
+    if not file_path.is_absolute():
+        file_path = Path.cwd() / file_path
+    
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier photo introuvable sur le serveur"
+        )
+    
+    # Lire le fichier
+    with open(file_path, "rb") as f:
+        file_content = f.read()
+    
+    # Re-compresser en qualité 85% pour HQ sans aller au original (peut être PNG/TIFF énorme)
+    try:
+        img = Image.open(io.BytesIO(file_content))
+        
+        # Garder la taille originale (jusqu'au MAX)
+        if img.width > MAX_WIDTH or img.height > MAX_HEIGHT:
+            img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.Resampling.LANCZOS)
+        
+        # Convertir RGBA en RGB
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        
+        # Compresser en qualité 85% (HQ)
+        output = io.BytesIO()
+        img.save(output, format='JPEG', quality=85, optimize=False)
+        file_content = output.getvalue()
+    except Exception as e:
+        print(f"Erreur re-compression HQ: {e}")
+        # Si erreur, renvoyer simplement le fichier original
+        pass
+    
+    # Retourner le fichier
+    filename = photo.get("filename", "photo.jpg")
+    return FileResponse(
+        io.BytesIO(file_content),
+        media_type="image/jpeg",
+        filename=filename
+    )
+
+
+@router.get("/{photo_id}/thumbnail")
+async def get_photo_thumbnail(photo_id: str):
+    """
+    Récupérer une miniature de la photo
+    """
+    from fastapi.responses import FileResponse
+    
+    try:
+        mongo_id = ObjectId(photo_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"ID de photo invalide: {str(e)}"
+        )
+    
+    mongo_db = get_mongodb()
+    photos_collection = mongo_db.photos
+    
+    # Trouver la photo
+    photo = photos_collection.find_one({"_id": mongo_id})
+    if not photo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Photo {photo_id} non trouvée"
+        )
+    
+    # Récupérer le chemin du fichier
+    file_path_str = photo.get("file_path", "")
+    if not file_path_str:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier photo introuvable"
+        )
+    
+    # Construire le chemin absolu
+    file_path = Path(file_path_str)
+    if not file_path.is_absolute():
+        file_path = Path.cwd() / file_path
+    
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier photo introuvable sur le serveur"
+        )
+    
+    # Créer une miniature
+    try:
+        with open(file_path, "rb") as f:
+            img = Image.open(io.BytesIO(f.read()))
+        
+        # Créer miniature 200x200
+        img.thumbnail((200, 200), Image.Resampling.LANCZOS)
+        
+        # Convertir RGBA en RGB
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        
+        output = io.BytesIO()
+        img.save(output, format='JPEG', quality=60, optimize=False)
+        output.seek(0)
+        
+        return FileResponse(
+            output,
+            media_type="image/jpeg"
+        )
+    except Exception as e:
+        print(f"Erreur création thumbnail: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur création miniature"
+        )

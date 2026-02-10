@@ -11,6 +11,12 @@ interface SearchResult {
   face_index: number
 }
 
+interface ShareData {
+  share_code: string
+  expires_at: string
+  photos_count: number
+}
+
 function Kiosk() {
   const navigate = useNavigate()
   const [eventCode, setEventCode] = useState('')
@@ -19,6 +25,8 @@ function Kiosk() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [cameraActive, setCameraActive] = useState(false)
+  const [shareData, setShareData] = useState<ShareData | null>(null)
+  const [generatingShare, setGeneratingShare] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -62,7 +70,7 @@ function Kiosk() {
 
     try {
       // Valider le code événement
-      await axios.get(`/api/v1/events/code/${eventCode.toUpperCase()}`)
+      await axios.get(`http://localhost:8000/api/v1/events/code/${eventCode.toUpperCase()}`)
       
       // Code valide, démarrer la caméra
       try {
@@ -105,42 +113,56 @@ function Kiosk() {
   }
 
   const captureAndSearch = async () => {
-    if (!videoRef.current || !canvasRef.current || !eventCode) return
+    if (!videoRef.current || !canvasRef.current || !eventCode) {
+      setError('❌ Caméra non prête. Veuillez réessayer.')
+      return
+    }
 
     setLoading(true)
     setError('')
+    setSearchResults([])
 
     try {
-      const eventsResponse = await axios.get(`/api/v1/events/code/${eventCode.toUpperCase()}`)
+      const eventsResponse = await axios.get(`http://localhost:8000/api/v1/events/code/${eventCode.toUpperCase()}`)
       const event = eventsResponse.data
       
       const canvas = canvasRef.current
       const video = videoRef.current
+      
+      // Vérifier que la vidéo est prête
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        throw new Error('Vidéo non prête. Veuillez patienter quelques secondes.')
+      }
+      
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
-      canvas.getContext('2d')?.drawImage(video, 0, 0)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Impossible d\'accéder au contexte canvas')
+      ctx.drawImage(video, 0, 0)
       
       const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1]
+      if (!imageBase64) throw new Error('Impossible de capturer l\'image')
 
-      const response = await axios.post('/api/v1/search/face', {
+      const response = await axios.post('http://localhost:8000/api/v1/search/face', {
         event_id: event.id,
         face_image: imageBase64,
         threshold: 0.15
       })
 
-      // Afficher TOUS les résultats trouvés, triés par similarité
-      const allMatches = response.data.matches
+      const allMatches = response.data.matches || []
       allMatches.sort((a: SearchResult, b: SearchResult) => b.similarity - a.similarity)
 
       setSearchResults(allMatches)
       setSelectedPhotos(new Set())
+      setShareData(null)
       
       if (allMatches.length === 0) {
         setError('⚠️ Aucune photo trouvée. Assurez-vous d\'être bien face à la caméra avec un bon éclairage.')
       }
     } catch (error: any) {
       console.error('Erreur recherche:', error)
-      setError(error.response?.data?.detail || '❌ Erreur lors de la recherche')
+      setError(error.response?.data?.detail || error.message || '❌ Erreur lors de la recherche')
+      setSearchResults([])
     } finally {
       setLoading(false)
     }
@@ -177,6 +199,49 @@ function Kiosk() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const generateShareCode = async () => {
+    if (selectedPhotos.size === 0) {
+      setError('❌ Veuillez sélectionner au moins une photo')
+      return
+    }
+
+    setGeneratingShare(true)
+    setError('')
+
+    try {
+      const eventsResponse = await axios.get(`http://localhost:8000/api/v1/events/code/${eventCode.toUpperCase()}`)
+      const event = eventsResponse.data
+
+      const response = await axios.post('http://localhost:8000/api/v1/shares', {
+        event_id: event.id,
+        face_id: 'auto_detected',
+        selected_photo_ids: Array.from(selectedPhotos)
+      })
+
+      setShareData({
+        share_code: response.data.share_code,
+        expires_at: response.data.expires_at,
+        photos_count: selectedPhotos.size
+      })
+    } catch (error: any) {
+      console.error('Erreur génération share:', error)
+      setError('❌ Erreur lors de la génération du code de partage')
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  const resetAndStartOver = () => {
+    setSearchResults([])
+    setSelectedPhotos(new Set())
+    setShareData(null)
+    setCameraActive(false)
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop())
+      setStream(null)
+    }
   }
 
   const printPhoto = (filename: string) => {
@@ -306,9 +371,9 @@ function Kiosk() {
             </div>
 
             <div className="photos-grid">
-              {searchResults.filter(r => r.similarity >= similarityThreshold).map((result) => (
+              {searchResults.filter(r => r.similarity >= similarityThreshold).map((result, index) => (
                 <div 
-                  key={result.photo_id} 
+                  key={`${result.photo_id}-${index}`}
                   className={`photo-card ${selectedPhotos.has(result.photo_id) ? 'selected' : ''}`}
                   onClick={() => togglePhotoSelection(result.photo_id)}
                 >
@@ -369,14 +434,110 @@ function Kiosk() {
 
             {selectedPhotos.size > 0 && (
               <div className="bulk-download">
-                <button 
-                  onClick={downloadSelectedPhotos}
-                  className="btn-primary btn-bulk"
-                >
-                  📥 Télécharger {selectedPhotos.size} photo{selectedPhotos.size > 1 ? 's' : ''}
-                </button>
+                <div style={{display: 'flex', gap: '20px', width: '100%', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap'}}>
+                  <button 
+                    onClick={generateShareCode}
+                    disabled={generatingShare}
+                    className="btn-primary btn-bulk"
+                    style={{minWidth: '300px'}}
+                  >
+                    {generatingShare ? '⏳ Génération...' : `🔗 Générer code pour ${selectedPhotos.size} photo${selectedPhotos.size > 1 ? 's' : ''}`}
+                  </button>
+                  <button 
+                    onClick={() => setSelectedPhotos(new Set())}
+                    className="btn-secondary"
+                    style={{padding: '18px 30px', fontSize: '16px'}}
+                  >
+                    🔄 Réinitialiser
+                  </button>
+                </div>
               </div>
             )}
+          </section>
+        )}
+
+        {shareData && (
+          <section className="share-summary" style={{animation: 'slideUp 0.6s ease-out'}}>
+            <div className="share-container">
+              <div className="share-content">
+                <h2 style={{textAlign: 'center', marginBottom: '30px', fontSize: '32px'}}>✨ Code de partage généré</h2>
+                
+                <div className="share-grid">
+                  {/* Share Info Section */}
+                  <div className="share-info" style={{gridColumn: '1 / -1'}}>
+                    <div className="info-card">
+                      <h3>📸 Informations</h3>
+                      <div className="info-item">
+                        <span className="label">Code partagé :</span>
+                        <span className="value" style={{fontFamily: 'monospace', fontWeight: 'bold', color: '#2563EB'}}>{shareData.share_code}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="label">Photos :</span>
+                        <span className="value">{shareData.photos_count}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="label">Expires :</span>
+                        <span className="value">Dans 48 heures</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="label">Lien :</span>
+                        <div style={{wordBreak: 'break-all', fontSize: '12px', color: '#2563EB', fontWeight: 'bold', marginTop: '8px'}}>
+                          {window.location.origin}/share/{shareData.share_code}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Selected Photos Preview */}
+                    <div style={{marginTop: '30px', backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '12px'}}>
+                      <h3 style={{marginTop: 0}}>📷 Photos sélectionnées ({selectedPhotos.size})</h3>
+                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px', marginTop: '15px'}}>
+                        {searchResults.filter(r => selectedPhotos.has(r.photo_id)).map((photo, idx) => (
+                          <div key={photo.photo_id} style={{position: 'relative'}}>
+                            <img 
+                              src={`/uploads/photos/${photo.filename}`}
+                              alt={`Photo ${idx + 1}`}
+                              style={{width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #2563EB'}}
+                            />
+                            <div style={{position: 'absolute', top: '2px', right: '2px', background: '#2563EB', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold'}}>
+                              {idx + 1}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '40px', flexWrap: 'wrap'}}>
+                  <button 
+                    onClick={() => {
+                      const text = `Owen'Snap - Récupérez vos photos!\n\n${window.location.origin}/share/${shareData.share_code}\n\nCode: ${shareData.share_code}`
+                      navigator.clipboard.writeText(text)
+                      alert('✅ Lien copié dans le presse-papiers!')
+                    }}
+                    className="btn-primary"
+                    style={{padding: '15px 30px'}}
+                  >
+                    📋 Copier le lien
+                  </button>
+                  <button 
+                    onClick={resetAndStartOver}
+                    className="btn-secondary"
+                    style={{padding: '15px 30px'}}
+                  >
+                    🔄 Nouveau scan
+                  </button>
+                  <button 
+                    onClick={() => navigate('/')}
+                    className="btn-secondary"
+                    style={{padding: '15px 30px'}}
+                  >
+                    🏠 Accueil
+                  </button>
+                </div>
+              </div>
+            </div>
           </section>
         )}
       </main>

@@ -26,10 +26,16 @@ app = FastAPI(
     redoc_url=f"{settings.API_PREFIX}/redoc",
 )
 
-# Configuration CORS
+# Configuration CORS - hardcoded for reliable cross-origin requests
+cors_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,10 +81,11 @@ async def api_root():
 
 
 # Import des routers
-from app.api import events, photos, search, orders, auth
+from app.api import events, photos, search, orders, auth, shares
 app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["auth"])
 app.include_router(events.router, prefix=f"{settings.API_PREFIX}/events", tags=["events"])
 app.include_router(photos.router, prefix=f"{settings.API_PREFIX}/photos", tags=["photos"])
+app.include_router(shares.router, prefix=f"{settings.API_PREFIX}/shares", tags=["shares"])
 app.include_router(search.router, prefix=f"{settings.API_PREFIX}/search", tags=["search"])
 app.include_router(orders.router, prefix=f"{settings.API_PREFIX}/orders", tags=["orders"])
 

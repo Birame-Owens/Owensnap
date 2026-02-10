@@ -39,6 +39,7 @@ mongo_db = mongo_client[MONGO_DB]
 # Collections MongoDB
 photos_collection = mongo_db["photos"]
 faces_collection = mongo_db["faces"]
+shares_collection = mongo_db["shares"]
 
 # Dependency pour FastAPI
 def get_db():
