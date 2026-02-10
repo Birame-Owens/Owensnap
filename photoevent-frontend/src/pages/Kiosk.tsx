@@ -193,11 +193,11 @@ function Kiosk() {
     <div className="kiosk-container">
       <header className="kiosk-header">
         <div className="header-content">
-          <h1 className="logo">💎 Owen'Snap</h1>
-          <p className="tagline">Trouvez vos photos en un clin d'œil</p>
+          <h1 className="logo">Owen'Snap</h1>
+          <p className="tagline">Reconnaissance faciale - Photos instantanées</p>
         </div>
         <button onClick={() => navigate('/')} className="btn-back">
-          ← Accueil
+          ← Retour
         </button>
       </header>
 

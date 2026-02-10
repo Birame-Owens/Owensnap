@@ -2,27 +2,27 @@
 .kiosk-container {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001a33 0%, #0d47a1 50%, #1a237e 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 /* ==================== HEADER ==================== */
 .kiosk-header {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
   padding: 30px 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 4px solid #667eea;
+  border-bottom: 4px solid #2563EB;
 }
 
 .header-content h1.logo {
   margin: 0;
   font-size: 42px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-weight: 900;
+  background: linear-gradient(135deg, #000000 0%, #2563EB 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -30,15 +30,15 @@
 }
 
 .header-content .tagline {
-  margin: 5px 0 0 0;
+  margin: 8px 0 0 0;
   color: #666;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .btn-back {
   padding: 12px 24px;
-  background: #667eea;
+  background: #2563EB;
   color: white;
   border: none;
   border-radius: 8px;
@@ -46,13 +46,13 @@
   font-size: 16px;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 .btn-back:hover {
-  background: #764ba2;
+  background: #1d4ed8;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 /* ==================== MAIN CONTENT ==================== */
@@ -151,14 +151,14 @@
 
 .input-code:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  border-color: #2563EB;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 /* ==================== BUTTONS ==================== */
 .btn-primary {
   padding: 16px 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -166,7 +166,7 @@
   font-size: 18px;
   font-weight: 700;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -191,7 +191,7 @@
 
 .btn-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
 }
 
 .btn-primary:active {
@@ -201,7 +201,7 @@
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
 }
 
 .btn-large {
@@ -278,19 +278,19 @@
 .circle-guide {
   width: 300px;
   height: 300px;
-  border: 4px solid rgba(102, 126, 234, 0.6);
+  border: 4px solid rgba(37, 99, 235, 0.6);
   border-radius: 50%;
   margin: 0 auto 20px;
-  box-shadow: 0 0 40px rgba(102, 126, 234, 0.4), inset 0 0 40px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 40px rgba(37, 99, 235, 0.4), inset 0 0 40px rgba(37, 99, 235, 0.2);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 0 40px rgba(102, 126, 234, 0.4), inset 0 0 40px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 40px rgba(37, 99, 235, 0.4), inset 0 0 40px rgba(37, 99, 235, 0.2);
   }
   50% {
-    box-shadow: 0 0 60px rgba(102, 126, 234, 0.6), inset 0 0 60px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0 60px rgba(37, 99, 235, 0.6), inset 0 0 60px rgba(37, 99, 235, 0.3);
   }
 }
 
@@ -368,7 +368,7 @@
 }
 
 .selection-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%);
   color: white;
   padding: 10px 20px;
   border-radius: 20px;
@@ -397,7 +397,7 @@
   width: 100%;
   height: 8px;
   border-radius: 5px;
-  background: linear-gradient(to right, #667eea, #764ba2);
+  background: linear-gradient(to right, #2563EB, #1d4ed8);
   outline: none;
   -webkit-appearance: none;
   margin: 10px 0;
@@ -411,15 +411,15 @@
   border-radius: 50%;
   background: white;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  border: 3px solid #667eea;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  border: 3px solid #2563EB;
   transition: all 0.2s ease;
 }
 
 .threshold-control input[type="range"]::-webkit-slider-thumb:hover {
   width: 28px;
   height: 28px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
 }
 
 .threshold-control input[type="range"]::-moz-range-thumb {
@@ -428,15 +428,15 @@
   border-radius: 50%;
   background: white;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  border: 3px solid #667eea;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  border: 3px solid #2563EB;
   transition: all 0.2s ease;
 }
 
 .threshold-control input[type="range"]::-moz-range-thumb:hover {
   width: 28px;
   height: 28px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
 }
 
 .threshold-control p {
@@ -481,9 +481,9 @@
 }
 
 .photo-card.selected {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
-  box-shadow: 0 0 30px rgba(102, 126, 234, 0.2);
+  border-color: #2563EB;
+  background: rgba(37, 99, 235, 0.05);
+  box-shadow: 0 0 30px rgba(37, 99, 235, 0.2);
 }
 
 .photo-wrapper {
@@ -525,7 +525,7 @@
 }
 
 .confidence-badge {
-  background: rgba(102, 126, 234, 0.95);
+  background: rgba(37, 99, 235, 0.95);
   color: white;
   padding: 8px 16px;
   border-radius: 20px;
@@ -593,7 +593,7 @@
   width: 24px;
   height: 24px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #2563EB;
 }
 
 /* ==================== BULK DOWNLOAD ==================== */
@@ -601,9 +601,9 @@
   display: flex;
   justify-content: center;
   padding: 30px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
   border-radius: 16px;
-  border: 2px dashed #667eea;
+  border: 2px dashed #2563EB;
 }
 
 .btn-bulk {
