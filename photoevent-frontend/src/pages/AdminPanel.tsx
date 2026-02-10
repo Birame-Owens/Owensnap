@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Upload, X, Trash2, Grid3x3, List, Plus, BarChart3, Calendar, Image as ImageIcon, Menu, ChevronRight } from 'lucide-react';
+import { Upload, X, Trash2, Grid3x3, List, Plus, BarChart3, Calendar, Image as ImageIcon, Menu, ChevronRight, Copy, Search, Hash, Folder, CheckCircle, ChevronDown } from 'lucide-react';
 
 interface Event {
   id?: string | number;
@@ -63,6 +63,10 @@ export default function AdminPanel() {
   const [newEventDate, setNewEventDate] = useState(new Date().toISOString().split('T')[0]);
   const [moveToEvent, setMoveToEvent] = useState<string | number>('');
   const [recentActivities, setRecentActivities] = useState<Array<{ id: string; action: string; timestamp: string }>>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [eventDropdownOpen, setEventDropdownOpen] = useState(false);
+  const [eventSearchQuery, setEventSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const API_BASE = '/api/v1';
@@ -582,71 +586,171 @@ export default function AdminPanel() {
         {/* Events Tab */}
         {tab === 'events' && (
           <div className="p-8">
-            <div className="mb-6">
+            {/* Header avec bouton créer */}
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900">Événements</h2>
+                <p className="text-gray-500 mt-1">{events.length} événement{events.length !== 1 ? 's' : ''} au total</p>
+              </div>
               {!showNewEventForm ? (
                 <button
                   onClick={() => setShowNewEventForm(true)}
-                  className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900"
+                  className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors"
                 >
                   <Plus className="h-5 w-5" />
                   Nouvel événement
                 </button>
-              ) : (
-                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-4">Créer un événement</h3>
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Nom de l'événement"
-                      value={newEventName}
-                      onChange={(e) => setNewEventName(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-                    <input
-                      type="date"
-                      value={newEventDate}
-                      onChange={(e) => setNewEventDate(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-                    <div className="flex gap-3">
-                      <button
-                        onClick={createEvent}
-                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900"
-                      >
-                        Créer
-                      </button>
-                      <button
-                        onClick={() => setShowNewEventForm(false)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              ) : null}
             </div>
 
-            <div className="space-y-3">
-              {events.map((event) => (
-                <div
-                  key={event.id || event._id}
-                  onClick={() => {
-                    setSelectedEvent(event.id || event._id);
-                    setTab('photos');
-                  }}
-                  className="bg-white p-6 rounded-lg border border-gray-200 hover:border-black cursor-pointer transition-colors flex justify-between items-center group"
-                >
-                  <div>
-                    <h3 className="font-medium text-gray-900 group-hover:text-black">{event.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{event.code} • {event.date}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-gray-600">{event.photo_count || 0} photos</span>
-                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-black" />
+            {/* Formulaire créer événement */}
+            {showNewEventForm && (
+              <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Créer un nouvel événement</h3>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Nom de l'événement"
+                    value={newEventName}
+                    onChange={(e) => setNewEventName(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                  <input
+                    type="date"
+                    value={newEventDate}
+                    onChange={(e) => setNewEventDate(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={createEvent}
+                      className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
+                    >
+                      Créer
+                    </button>
+                    <button
+                      onClick={() => setShowNewEventForm(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Annuler
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Barre de recherche */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom ou code..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Grid des événements */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events
+                .filter(
+                  (event) =>
+                    event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    event.code.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((event) => {
+                  const eventId = event.id || event._id;
+                  const photosCount = event.photo_count || 0;
+
+                  return (
+                    <div
+                      key={eventId}
+                      className="bg-white rounded-xl border border-gray-200 hover:border-black hover:shadow-lg transition-all group cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setSelectedEvent(eventId);
+                        setTab('photos');
+                      }}
+                    >
+                      {/* Header avec nom et date */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-black transition-colors truncate">
+                          {event.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">{event.date}</p>
+                      </div>
+
+                      {/* Contenu */}
+                      <div className="p-4">
+                        {/* Code copiable */}
+                        <div className="mb-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(event.code);
+                              setCopiedCode(event.code);
+                              setTimeout(() => setCopiedCode(null), 2000);
+                            }}
+                            className="w-full flex items-center justify-between bg-gray-100 hover:bg-gray-200 rounded-lg px-3 py-2 transition-colors group/copy"
+                          >
+                            <code className="text-sm font-mono text-gray-700 truncate">{event.code}</code>
+                            {copiedCode === event.code ? (
+                              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 ml-2" />
+                            ) : (
+                              <Copy className="h-4 w-4 text-gray-400 group-hover/copy:text-gray-600 flex-shrink-0 ml-2" />
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Stats compactes */}
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600 flex items-center gap-2">
+                              <ImageIcon className="h-4 w-4 text-blue-600" />
+                              Photos
+                            </span>
+                            <span className="text-lg font-bold text-blue-600">{photosCount}</span>
+                          </div>
+                          {event.faces_count !== undefined && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600 flex items-center gap-2">
+                                <span className="text-sm">👤</span>
+                                Visages
+                              </span>
+                              <span className="text-lg font-bold text-purple-600">{event.faces_count}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bouton voir photos */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedEvent(eventId);
+                            setTab('photos');
+                          }}
+                          className="w-full px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          Voir photos
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+              {events.filter(
+                (event) =>
+                  event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  event.code.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 && (
+                <div className="col-span-1 text-center py-12">
+                  <Folder className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Aucun événement trouvé</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -662,19 +766,107 @@ export default function AdminPanel() {
                   
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-900 mb-2">Événement</label>
-                    <select
-                      value={selectedEvent}
-                      onChange={(e) => setSelectedEvent(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    >
-                      <option value="">Sélectionner</option>
-                      {events.map((event) => (
-                        <option key={event.id || event._id} value={event.id || event._id}>
-                          {event.name} ({event.code})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <button
+                        onClick={() => setEventDropdownOpen(!eventDropdownOpen)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-left bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                      >
+                        {selectedEvent
+                          ? (() => {
+                              const evt = events.find((e) => (e.id || e._id) === selectedEvent);
+                              return evt ? (
+                                <span className="flex items-center justify-between">
+                                  <span>
+                                    <span className="font-medium">{evt.name}</span>
+                                    <span className="text-gray-500 text-sm ml-2">({evt.code})</span>
+                                  </span>
+                                </span>
+                              ) : (
+                                'Sélectionner'
+                              );
+                            })()
+                          : 'Sélectionner un événement'}
+                      </button>
+
+                      {eventDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                          {/* Recherche */}
+                          <div className="sticky top-0 bg-white border-b border-gray-200 p-3">
+                            <div className="relative">
+                              <Search className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
+                              <input
+                                type="text"
+                                placeholder="Rechercher..."
+                                value={eventSearchQuery}
+                                onChange={(e) => setEventSearchQuery(e.target.value)}
+                                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Liste des événements */}
+                          <div className="max-h-64 overflow-y-auto">
+                            {events
+                              .filter(
+                                (event) =>
+                                  event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
+                                  event.code.toLowerCase().includes(eventSearchQuery.toLowerCase())
+                              )
+                              .map((event) => {
+                                const eventId = event.id || event._id;
+                                const isSelected = selectedEvent === eventId;
+                                return (
+                                  <button
+                                    key={eventId}
+                                    onClick={() => {
+                                      setSelectedEvent(eventId);
+                                      setEventDropdownOpen(false);
+                                      setEventSearchQuery('');
+                                    }}
+                                    className={`w-full px-4 py-3 text-left border-b border-gray-100 hover:bg-blue-50 transition-colors last:border-b-0 ${
+                                      isSelected ? 'bg-blue-100' : ''
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="font-medium text-gray-900">{event.name}</p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {event.code} • {event.photo_count || 0} photos
+                                        </p>
+                                      </div>
+                                      {isSelected && (
+                                        <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            {events.filter(
+                              (event) =>
+                                event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
+                                event.code.toLowerCase().includes(eventSearchQuery.toLowerCase())
+                            ).length === 0 && (
+                              <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                                Aucun événement trouvé
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Fermer dropdown au clic dehors */}
+                  {eventDropdownOpen && (
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => {
+                        setEventDropdownOpen(false);
+                        setEventSearchQuery('');
+                      }}
+                    />
+                  )}
 
                   <div
                     onDragEnter={handleDragEnter}
