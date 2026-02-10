@@ -9,6 +9,9 @@ interface Event {
   code: string;
   date: string;
   photo_count?: number;
+  faces_count?: number;
+  storage_mb?: number;
+  avg_photo_size_mb?: number;
 }
 
 interface Photo {
@@ -37,6 +40,8 @@ interface Stats {
   events_today?: number;
   total_faces?: number;
   recent_events?: Array<any>;
+  events?: Array<any>;
+  avg_photo_size_mb?: number;
 }
 
 export default function AdminPanel() {
@@ -89,8 +94,8 @@ export default function AdminPanel() {
           setStats(statsRes.data);
         } else {
           // Fallback stats basées sur les événements
-          const totalPhotos = eventsList.reduce((sum, e) => sum + (e.photo_count || 0), 0);
-          const totalFaces = eventsList.reduce((sum, e) => sum + (e.faces_count || 0), 0);
+          const totalPhotos = eventsList.reduce((sum: number, e: Event) => sum + (e.photo_count || 0), 0);
+          const totalFaces = eventsList.reduce((sum: number, e: Event) => sum + (e.faces_count || 0), 0);
           setStats({
             total_events: eventsList.length,
             total_photos: totalPhotos,
@@ -437,9 +442,73 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Events */}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+              {/* Storage by Events */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">📊 Espace par événement</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">Événement</th>
+                        <th className="text-center py-2 px-3 font-medium text-gray-700">Photos</th>
+                        <th className="text-center py-2 px-3 font-medium text-gray-700">Visages</th>
+                        <th className="text-right py-2 px-3 font-medium text-gray-700">Espace</th>
+                        <th className="text-right py-2 px-3 font-medium text-gray-700">Moy/Photo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats?.events && stats.events.length > 0 ? (
+                        stats.events.map((event: any) => (
+                          <tr key={event.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-3">
+                              <div>
+                                <p className="font-medium text-gray-900">{event.name}</p>
+                                <p className="text-xs text-gray-500">{event.code}</p>
+                              </div>
+                            </td>
+                            <td className="text-center py-3 px-3">{event.photo_count}</td>
+                            <td className="text-center py-3 px-3">
+                              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">
+                                {event.faces_count}
+                              </span>
+                            </td>
+                            <td className="text-right py-3 px-3">
+                              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                                {event.storage_mb} MB
+                              </span>
+                            </td>
+                            <td className="text-right py-3 px-3 text-gray-600">
+                              {event.avg_photo_size_mb} MB
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="text-center py-4 text-gray-500">
+                            Aucun événement
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {stats?.avg_photo_size_mb && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                    <p className="text-blue-900">
+                      <strong>Moyenne globale:</strong> {stats.avg_photo_size_mb} MB par photo
+                      {stats.avg_photo_size_mb > 2 && (
+                        <span className="ml-2 text-orange-600">⚠️ Considérer l'augmentation de la compression</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              {/* Recent Events */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6" style={{display: 'none'}}>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Événements récents</h3>
                 <div className="space-y-3">
                   {events.slice(0, 5).length > 0 ? (

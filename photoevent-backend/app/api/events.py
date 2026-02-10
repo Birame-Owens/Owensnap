@@ -143,7 +143,8 @@ async def delete_event(event_id: int, db: Session = Depends(get_db)):
 
 @router.get("/admin/stats")
 async def get_admin_stats(db: Session = Depends(get_db)):
-    """Récupérer les statistiques globales pour le dashboard admin"""
+    """Récupérer les statistiques avec espace réel par événement"""
+    from pathlib import Path
     mongo_db = get_mongodb()
     
     # Compter les événements
@@ -156,38 +157,54 @@ async def get_admin_stats(db: Session = Depends(get_db)):
     total_photos = photos_collection.count_documents({})
     total_faces = faces_collection.count_documents({})
     
-    # Calculer le stockage estimé (chaque photo ~1.5 MB)
-    estimated_storage_mb = total_photos * 1.5
+    # Récupérer tous les événements pour calculer l'espace réel
+    all_events = db.query(Event).order_by(desc(Event.date)).all()
     
-    # Récupérer le nombre de photos uploadées aujourd'hui
-    from datetime import datetime, timedelta
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_photos = photos_collection.count_documents({
-        "uploaded_at": {"$gte": today_start}
-    })
-    
-    # Récupérer les événements récents
-    recent_events = db.query(Event).order_by(desc(Event.date)).limit(5).all()
-    
-    # Pour chaque événement, compter les photos
+    # Calculer l'espace réel par événement
     events_data = []
-    for event in recent_events:
-        photo_count = photos_collection.count_documents({"event_id": event.id})
+    total_storage_bytes = 0
+    
+    for event in all_events:
+        photos_for_event = list(photos_collection.find({"event_id": event.id}))
+        photo_count = len(photos_for_event)
         face_count = faces_collection.count_documents({"event_id": event.id})
+        
+        # Calculer la taille réelle des fichiers pour cet événement
+        storage_bytes = 0
+        for photo in photos_for_event:
+            file_size = photo.get("file_size", 0)
+            storage_bytes += file_size
+        
+        total_storage_bytes += storage_bytes
+        storage_mb = storage_bytes / (1024 * 1024)  # Convertir en MB
+        
         events_data.append({
             "id": event.id,
             "name": event.name,
             "code": event.code,
             "date": event.date.isoformat(),
             "photo_count": photo_count,
-            "faces_count": face_count
+            "faces_count": face_count,
+            "storage_mb": round(storage_mb, 2),
+            "avg_photo_size_mb": round(storage_mb / photo_count, 2) if photo_count > 0 else 0
         })
+    
+    # Récupérer le nombre de photos uploadées aujourd'hui
+    from datetime import datetime
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_photos = photos_collection.count_documents({
+        "uploaded_at": {"$gte": today_start}
+    })
+    
+    total_storage_mb = total_storage_bytes / (1024 * 1024)
     
     return {
         "total_events": total_events,
         "total_photos": total_photos,
         "total_faces": total_faces,
-        "estimated_storage_mb": round(estimated_storage_mb, 2),
+        "total_storage_mb": round(total_storage_mb, 2),
         "today_photos": today_photos,
-        "recent_events": events_data
+        "events": events_data,
+        "avg_photo_size_mb": round(total_storage_mb / total_photos, 2) if total_photos > 0 else 0
     }
+

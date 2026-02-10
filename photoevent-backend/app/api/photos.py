@@ -12,12 +12,45 @@ from app.database import get_db, get_mongodb
 from app.schemas import PhotoUploadResponse
 from app.db.models import Event
 from app.services.face_recognition import get_face_service
+from PIL import Image
+import io
 
 router = APIRouter()
 
 # Répertoire de stockage local (temporaire avant S3)
 UPLOAD_DIR = Path("uploads/photos")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Configuration de compression
+COMPRESSION_QUALITY = 85  # 1-100: qualité JPEG
+MAX_WIDTH = 2048  # Largeur max en pixels
+MAX_HEIGHT = 2048  # Hauteur max en pixels
+
+
+def compress_image(file_content: bytes, quality: int = COMPRESSION_QUALITY) -> bytes:
+    """Compresser une image pour réduire l'espace disque"""
+    try:
+        # Ouvrir l'image
+        img = Image.open(io.BytesIO(file_content))
+        
+        # Redimensionner si nécessaire
+        if img.width > MAX_WIDTH or img.height > MAX_HEIGHT:
+            img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.Resampling.LANCZOS)
+        
+        # Convertir RGBA en RGB si nécessaire
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        
+        # Compresser et sauvegarder en JPEG
+        output = io.BytesIO()
+        img.save(output, format='JPEG', quality=quality, optimize=True)
+        return output.getvalue()
+    except Exception as e:
+        print(f"Erreur compression image: {e}")
+        return file_content  # Retourner l'original si erreur
+
 
 
 @router.post("/upload", response_model=List[PhotoUploadResponse])
@@ -57,10 +90,17 @@ async def upload_photos(
         unique_filename = f"{event.code}_{timestamp}_{file.filename}"
         file_path = UPLOAD_DIR / unique_filename
         
-        # Sauvegarder le fichier localement
+        # Lire et compresser le fichier
+        original_content = await file.read()
+        compressed_content = compress_image(original_content)
+        
+        # Calculer la économie d'espace
+        compression_ratio = len(compressed_content) / len(original_content) if original_content else 1
+        saved_mb = (len(original_content) - len(compressed_content)) / (1024 * 1024)
+        
+        # Sauvegarder le fichier compressé localement
         with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+            buffer.write(compressed_content)
         
         # Créer le document MongoDB
         # IMPORTANT: Sauvegarder le chemin relatif, pas le chemin absolu
@@ -71,7 +111,10 @@ async def upload_photos(
             "file_path": "uploads/photos/" + unique_filename,  # Chemin relatif
             "status": "pending",  # pending -> processing -> ready
             "uploaded_at": datetime.now(),
-            "file_size": len(content)
+            "file_size": len(compressed_content),
+            "original_size": len(original_content),
+            "compression_ratio": round(compression_ratio, 2),
+            "storage_saved_mb": round(saved_mb, 2)
         }
         
         result = photos_collection.insert_one(photo_doc)
