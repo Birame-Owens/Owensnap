@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from app.schemas import EventCreate, EventUpdate, EventResponse, EventListResponse
 from app.db.models import Event
-from app.database import get_db
+from app.database import get_db, get_mongodb
 import secrets
 import string
 
@@ -51,13 +51,22 @@ async def list_events(
     page_size: int = Query(20, ge=1, le=100, description="Taille de page"),
     db: Session = Depends(get_db)
 ):
-    """Lister tous les événements (paginé)"""
+    """Lister tous les événements (paginé) avec comptes de photos et faces"""
     # Compter le total
     total = db.query(Event).count()
     
     # Récupérer la page
     offset = (page - 1) * page_size
     events = db.query(Event).order_by(desc(Event.date)).offset(offset).limit(page_size).all()
+    
+    # Enrichir avec comptes de photos et faces
+    mongo_db = get_mongodb()
+    photos_collection = mongo_db.photos
+    faces_collection = mongo_db.faces
+    
+    for event in events:
+        event.photo_count = photos_collection.count_documents({"event_id": event.id})
+        event.faces_count = faces_collection.count_documents({"event_id": event.id})
     
     return EventListResponse(
         events=events,
@@ -130,3 +139,55 @@ async def delete_event(event_id: int, db: Session = Depends(get_db)):
     
     db.delete(event)
     db.commit()
+
+
+@router.get("/admin/stats")
+async def get_admin_stats(db: Session = Depends(get_db)):
+    """Récupérer les statistiques globales pour le dashboard admin"""
+    mongo_db = get_mongodb()
+    
+    # Compter les événements
+    total_events = db.query(Event).count()
+    
+    # Récupérer le compte de photos et de faces depuis MongoDB
+    photos_collection = mongo_db.photos
+    faces_collection = mongo_db.faces
+    
+    total_photos = photos_collection.count_documents({})
+    total_faces = faces_collection.count_documents({})
+    
+    # Calculer le stockage estimé (chaque photo ~1.5 MB)
+    estimated_storage_mb = total_photos * 1.5
+    
+    # Récupérer le nombre de photos uploadées aujourd'hui
+    from datetime import datetime, timedelta
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_photos = photos_collection.count_documents({
+        "uploaded_at": {"$gte": today_start}
+    })
+    
+    # Récupérer les événements récents
+    recent_events = db.query(Event).order_by(desc(Event.date)).limit(5).all()
+    
+    # Pour chaque événement, compter les photos
+    events_data = []
+    for event in recent_events:
+        photo_count = photos_collection.count_documents({"event_id": event.id})
+        face_count = faces_collection.count_documents({"event_id": event.id})
+        events_data.append({
+            "id": event.id,
+            "name": event.name,
+            "code": event.code,
+            "date": event.date.isoformat(),
+            "photo_count": photo_count,
+            "faces_count": face_count
+        })
+    
+    return {
+        "total_events": total_events,
+        "total_photos": total_photos,
+        "total_faces": total_faces,
+        "estimated_storage_mb": round(estimated_storage_mb, 2),
+        "today_photos": today_photos,
+        "recent_events": events_data
+    }

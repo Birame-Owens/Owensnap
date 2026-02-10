@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 import os
 from pathlib import Path
 from datetime import datetime
+from bson.objectid import ObjectId
 from app.database import get_db, get_mongodb
 from app.schemas import PhotoUploadResponse
 from app.db.models import Event
@@ -129,7 +130,7 @@ async def get_event_photos(
     event_id: int,
     db: Session = Depends(get_db)
 ):
-    """Récupérer toutes les photos d'un événement (avec vérification de fichier)"""
+    """Récupérer toutes les photos d'un événement (avec vérification de fichier et faces_count)"""
     
     # Vérifier que l'événement existe
     event = db.query(Event).filter(Event.id == event_id).first()
@@ -141,10 +142,12 @@ async def get_event_photos(
     
     mongo_db = get_mongodb()
     photos_from_db = list(mongo_db.photos.find({"event_id": event_id}))
+    faces_collection = mongo_db.faces
     
     # Vérifier que les fichiers existent réellement
     valid_photos = []
     for photo in photos_from_db:
+        photo_id = photo["_id"]
         photo["_id"] = str(photo["_id"])
         file_path_str = photo.get("file_path", "")
         
@@ -157,18 +160,27 @@ async def get_event_photos(
         # Vérifier si le fichier existe
         if file_path.exists():
             photo["file_exists"] = True
-            valid_photos.append(photo)
         else:
             photo["file_exists"] = False
-            valid_photos.append(photo)
+        
+        # Compter les faces détectées pour cette photo
+        faces_count = faces_collection.count_documents({"photo_id": photo_id})
+        photo["faces_detected"] = faces_count
+        
+        valid_photos.append(photo)
+    
+    # Compter le total de faces
+    total_faces = faces_collection.count_documents({"event_id": event_id})
     
     return {
         "event_id": event_id,
         "event_code": event.code,
         "photos": valid_photos,
         "total": len(photos_from_db),
-        "valid": len([p for p in valid_photos if p.get("file_exists", False)])
+        "valid": len([p for p in valid_photos if p.get("file_exists", False)]),
+        "total_faces": total_faces
     }
+
 
 
 @router.get("/event/{event_id}/verify")
@@ -300,4 +312,54 @@ async def migrate_file_paths(db: Session = Depends(get_db)):
     return {
         "migrated_count": migrated_count,
         "message": f"{migrated_count} chemin(s) converti(s) en chemin(s) relatif(s)"
+    }
+
+
+@router.delete("/{photo_id}")
+async def delete_photo(photo_id: str, db: Session = Depends(get_db)):
+    """Supprimer une photo par son ID MongoDB"""
+    try:
+        # Convertir l'ID en ObjectId MongoDB
+        mongo_id = ObjectId(photo_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"ID de photo invalide: {str(e)}"
+        )
+    
+    mongo_db = get_mongodb()
+    photos_collection = mongo_db.photos
+    
+    # Trouver la photo
+    photo = photos_collection.find_one({"_id": mongo_id})
+    if not photo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Photo {photo_id} non trouvée"
+        )
+    
+    # Supprimer le fichier physique s'il existe
+    file_path_str = photo.get("file_path", "")
+    if file_path_str:
+        file_path = Path(file_path_str)
+        if not file_path.is_absolute():
+            file_path = Path.cwd() / file_path
+        
+        try:
+            if file_path.exists():
+                file_path.unlink()
+        except Exception as e:
+            print(f"Erreur suppression fichier {file_path}: {e}")
+    
+    # Supprimer la photo de MongoDB
+    result = photos_collection.delete_one({"_id": mongo_id})
+    
+    # Supprimer les faces associées
+    faces_collection = mongo_db.faces
+    faces_collection.delete_many({"photo_id": mongo_id})
+    
+    return {
+        "photo_id": photo_id,
+        "deleted": result.deleted_count > 0,
+        "message": "Photo supprimée avec succès"
     }

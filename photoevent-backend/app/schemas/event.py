@@ -33,6 +33,8 @@ class EventResponse(EventBase):
     code: str = Field(..., description="Code unique de l'événement")
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    photo_count: Optional[int] = Field(None, description="Nombre de photos pour cet événement")
+    faces_count: Optional[int] = Field(None, description="Nombre de visages détectés pour cet événement")
     
     model_config = ConfigDict(from_attributes=True)
 

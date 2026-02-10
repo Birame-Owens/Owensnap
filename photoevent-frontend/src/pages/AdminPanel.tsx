@@ -17,6 +17,9 @@ interface Photo {
   event_id: string | number;
   created_at: string;
   file_exists?: boolean;
+  faces_detected?: number;
+  file_path?: string;
+  status?: string;
 }
 
 interface UploadProgress {
@@ -28,15 +31,19 @@ type Tab = 'dashboard' | 'events' | 'photos';
 interface Stats {
   total_events: number;
   total_photos: number;
-  total_storage_mb: number;
-  events_today: number;
+  estimated_storage_mb?: number;
+  total_storage_mb?: number;
+  today_photos?: number;
+  events_today?: number;
+  total_faces?: number;
+  recent_events?: Array<any>;
 }
 
 export default function AdminPanel() {
   const [tab, setTab] = useState<Tab>('dashboard');
   const [events, setEvents] = useState<Event[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<string | number>('');
+  const [selectedEvent, setSelectedEvent] = useState<string | number | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
   const [loading, setLoading] = useState(true);
@@ -50,6 +57,7 @@ export default function AdminPanel() {
   const [newEventName, setNewEventName] = useState('');
   const [newEventDate, setNewEventDate] = useState(new Date().toISOString().split('T')[0]);
   const [moveToEvent, setMoveToEvent] = useState<string | number>('');
+  const [recentActivities, setRecentActivities] = useState<Array<{ id: string; action: string; timestamp: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const API_BASE = '/api/v1';
@@ -60,7 +68,7 @@ export default function AdminPanel() {
       try {
         const [eventsRes, statsRes] = await Promise.all([
           axios.get(`${API_BASE}/events/`),
-          axios.get(`${API_BASE}/admin/stats`).catch(() => null)
+          axios.get(`${API_BASE}/events/admin/stats`).catch(() => null)
         ]);
 
         let eventsList = Array.isArray(eventsRes.data) 
@@ -79,7 +87,27 @@ export default function AdminPanel() {
 
         if (statsRes?.data) {
           setStats(statsRes.data);
+        } else {
+          // Fallback stats basées sur les événements
+          const totalPhotos = eventsList.reduce((sum, e) => sum + (e.photo_count || 0), 0);
+          const totalFaces = eventsList.reduce((sum, e) => sum + (e.faces_count || 0), 0);
+          setStats({
+            total_events: eventsList.length,
+            total_photos: totalPhotos,
+            estimated_storage_mb: totalPhotos * 1.5, // Estimation
+            today_photos: 0,
+            total_faces: totalFaces,
+          });
         }
+
+        // Initialiser les activités récentes
+        setRecentActivities([
+          {
+            id: '1',
+            action: 'Application démarrée',
+            timestamp: new Date().toISOString(),
+          },
+        ]);
       } catch (error) {
         setMessage({ type: 'error', text: 'Erreur lors du chargement des données' });
       } finally {
@@ -136,6 +164,7 @@ export default function AdminPanel() {
 
       const photosRes = await axios.get(`${API_BASE}/photos/event/${selectedEvent}`);
       setPhotos(photosRes.data.photos || []);
+      addActivity(`${fileArray.length} photo(s) uploadée(s) pour l'événement`);
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -164,6 +193,7 @@ export default function AdminPanel() {
       setNewEventName('');
       setShowNewEventForm(false);
       setMessage({ type: 'success', text: 'Événement créé ✓' });
+      addActivity(`Événement créé: ${newEventName}`);
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -185,7 +215,8 @@ export default function AdminPanel() {
       setSelectedPhotos(new Set());
       const photosRes = await axios.get(`${API_BASE}/photos/event/${selectedEvent}`);
       setPhotos(photosRes.data.photos || []);
-      setMessage({ type: 'success', text: `Photos ajoutées ✓` });
+      setMessage({ type: 'success', text: `${selectedPhotos.size} photo(s) déplacée(s) ✓` });
+      addActivity(`${selectedPhotos.size} photo(s) ajoutée(s) à un événement`);
     } catch (error) {
       setMessage({ type: 'error', text: 'Erreur lors du déplacement' });
     }
@@ -222,10 +253,24 @@ export default function AdminPanel() {
     try {
       await axios.delete(`${API_BASE}/photos/${photoId}`);
       setPhotos(photos.filter((p) => p._id !== photoId));
-      setMessage({ type: 'success', text: 'Photo supprimée' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Erreur lors de la suppression' });
+      setMessage({ type: 'success', text: 'Photo supprimée ✓' });
+      addActivity(`Photo supprimée: ${photoId.slice(0, 8)}...`);
+    } catch (error: any) {
+      console.error('Erreur suppression:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.detail || 'Erreur lors de la suppression'
+      });
     }
+  };
+
+  const addActivity = (action: string) => {
+    const newActivity = {
+      id: Math.random().toString(),
+      action,
+      timestamp: new Date().toISOString(),
+    };
+    setRecentActivities((prev) => [newActivity, ...prev].slice(0, 20));
   };
 
   const getPhotoUrl = (filename: string) => {
@@ -247,12 +292,19 @@ export default function AdminPanel() {
     if (!window.confirm(`Supprimer ${selectedPhotos.size} photo(s)?`)) return;
 
     try {
+      let successCount = 0;
       for (const photoId of selectedPhotos) {
-        await axios.delete(`${API_BASE}/photos/${photoId}`);
+        try {
+          await axios.delete(`${API_BASE}/photos/${photoId}`);
+          successCount++;
+        } catch (error) {
+          console.error(`Erreur suppression photo ${photoId}:`, error);
+        }
       }
       setPhotos(photos.filter((p) => !selectedPhotos.has(p._id)));
       setSelectedPhotos(new Set());
-      setMessage({ type: 'success', text: `${selectedPhotos.size} photo(s) supprimée(s) ✓` });
+      setMessage({ type: 'success', text: `${successCount}/${selectedPhotos.size} photo(s) supprimée(s) ✓` });
+      addActivity(`${successCount} photo(s) supprimée(s) en masse`);
     } catch (error) {
       setMessage({ type: 'error', text: 'Erreur lors de la suppression' });
     }
@@ -338,39 +390,106 @@ export default function AdminPanel() {
         {/* Dashboard Tab */}
         {tab === 'dashboard' && (
           <div className="p-8">
-            {stats && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white px-6 py-8 rounded-lg border border-gray-200">
-                  <p className="text-gray-500 text-sm font-medium">Événements</p>
-                  <p className="text-4xl font-light mt-2">{stats.total_events}</p>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-8 rounded-lg border border-blue-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-blue-700 text-sm font-medium">Événements</p>
+                    <p className="text-4xl font-light text-blue-900 mt-2">{stats?.total_events || 0}</p>
+                  </div>
+                  <Calendar className="h-10 w-10 text-blue-300" />
                 </div>
-                <div className="bg-white px-6 py-8 rounded-lg border border-gray-200">
-                  <p className="text-gray-500 text-sm font-medium">Photos</p>
-                  <p className="text-4xl font-light mt-2">{stats.total_photos}</p>
+                <p className="text-xs text-blue-600">Événements créés au total</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 px-6 py-8 rounded-lg border border-purple-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-purple-700 text-sm font-medium">Photos</p>
+                    <p className="text-4xl font-light text-purple-900 mt-2">{stats?.total_photos || 0}</p>
+                  </div>
+                  <ImageIcon className="h-10 w-10 text-purple-300" />
                 </div>
-                <div className="bg-white px-6 py-8 rounded-lg border border-gray-200">
-                  <p className="text-gray-500 text-sm font-medium">Espace utilisé</p>
-                  <p className="text-4xl font-light mt-2">{stats.total_storage_mb.toFixed(1)}MB</p>
-                </div>
-                <div className="bg-white px-6 py-8 rounded-lg border border-gray-200">
-                  <p className="text-gray-500 text-sm font-medium">Aujourd'hui</p>
-                  <p className="text-4xl font-light mt-2">{stats.events_today}</p>
+                <p className="text-xs text-purple-600">Photos uploadées</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 px-6 py-8 rounded-lg border border-green-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-green-700 text-sm font-medium">Espace utilisé</p>
+                    <p className="text-4xl font-light text-green-900 mt-2">{(stats?.estimated_storage_mb || stats?.total_storage_mb || 0).toFixed(1)}</p>
+                    <p className="text-xs text-green-600 mt-1">MB</p>
+                  </div>
+                  <BarChart3 className="h-10 w-10 text-green-300" />
                 </div>
               </div>
-            )}
 
-            <div className="mt-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Événements récents</h3>
-              <div className="space-y-2">
-                {events.slice(0, 5).map((event) => (
-                  <div key={event.id || event._id} className="bg-white px-6 py-4 rounded-lg border border-gray-200 flex justify-between items-center">
-                    <div>
-                      <p className="font-medium text-gray-900">{event.name}</p>
-                      <p className="text-sm text-gray-500">{event.code} • {event.date}</p>
-                    </div>
-                    <p className="text-sm font-medium text-gray-600">{event.photo_count || 0} photos</p>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 px-6 py-8 rounded-lg border border-orange-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-orange-700 text-sm font-medium">Photos aujourd'hui</p>
+                    <p className="text-4xl font-light text-orange-900 mt-2">{stats?.today_photos || stats?.events_today || 0}</p>
                   </div>
-                ))}
+                  <Calendar className="h-10 w-10 text-orange-300" />
+                </div>
+                <p className="text-xs text-orange-600">Uploadées aujourd'hui</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Recent Events */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Événements récents</h3>
+                <div className="space-y-3">
+                  {events.slice(0, 5).length > 0 ? (
+                    events.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id || event._id}
+                        className="p-4 border border-gray-100 rounded-lg hover:border-gray-300 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{event.name}</h4>
+                            <p className="text-sm text-gray-500 mt-1">{event.code} • {event.date}</p>
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full block">
+                              📸 {event.photo_count || 0}
+                            </span>
+                            {event.faces_count !== undefined && (
+                              <span className="text-xs font-medium text-purple-700 bg-purple-100 px-3 py-1 rounded-full block">
+                                👤 {event.faces_count}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm">Aucun événement</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Activities */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Activités récentes</h3>
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {recentActivities.length > 0 ? (
+                    recentActivities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="p-3 border-l-4 border-blue-500 bg-blue-50 rounded"
+                      >
+                        <p className="text-sm text-gray-900">{activity.action}</p>
+                        <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString('fr-FR')}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm">Aucune activité récente</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -599,6 +718,11 @@ export default function AdminPanel() {
                             alt="Photo"
                             className="w-full h-40 object-cover rounded-lg"
                           />
+                          {photo.faces_detected !== undefined && (
+                            <div className="absolute bottom-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                              👤 {photo.faces_detected}
+                            </div>
+                          )}
                           <div
                             className={`absolute inset-0 rounded-lg bg-black transition-opacity ${
                               selectedPhotos.has(photo._id)
@@ -643,16 +767,21 @@ export default function AdminPanel() {
                               alt="Photo"
                               className="w-12 h-12 object-cover rounded"
                             />
-                            <div>
+                            <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900">{photo.filename}</p>
                               <p className="text-xs text-gray-500">
                                 {new Date(photo.created_at).toLocaleDateString('fr-FR')}
                               </p>
                             </div>
+                            {photo.faces_detected !== undefined && (
+                              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
+                                👤 {photo.faces_detected}
+                              </span>
+                            )}
                           </div>
                           <button
                             onClick={() => deletePhoto(photo._id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-4"
                           >
                             <Trash2 className="h-5 w-5" />
                           </button>
