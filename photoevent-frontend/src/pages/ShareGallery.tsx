@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import QRCode from 'qrcode';
-import { Download, QrCode, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Download, QrCode, Clock, CheckCircle, AlertCircle, Share2, ArrowRight } from 'lucide-react';
 import './Gallery.css';
 
 interface Photo {
@@ -29,6 +29,7 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadedPhotos, setDownloadedPhotos] = useState<Set<string>>(new Set());
+  const [showQR, setShowQR] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const API_BASE = 'http://localhost:8000/api/v1';
@@ -37,39 +38,35 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
     loadShare();
   }, [shareCode]);
 
-  // Générer le QR code après que le partage soit chargé
   useEffect(() => {
-    if (qrCodeUrl && qrCanvasRef.current) {
-      QRCode.toCanvas(qrCanvasRef.current, qrCodeUrl, {
-        width: 250,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
+    if (showQR && qrCodeUrl && qrCanvasRef.current) {
+      setTimeout(() => {
+        if (qrCanvasRef.current && qrCodeUrl) {
+          QRCode.toCanvas(qrCanvasRef.current, qrCodeUrl, {
+            width: 250,
+            margin: 2,
+            color: { dark: '#000000', light: '#FFFFFF' },
+            errorCorrectionLevel: 'H'
+          }).catch(err => console.error('QR Error:', err));
         }
-      }).catch((err) => {
-        console.error('Erreur génération QR:', err);
-      });
+      }, 100);
     }
-  }, [qrCodeUrl]);
+  }, [showQR, qrCodeUrl]);
 
   const loadShare = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_BASE}/shares/${shareCode}`);
       setShare(res.data);
-
-      // Générer le URL du partage partageable
       const qrUrl = `http://localhost:3000/share/${shareCode}`;
       setQrCodeUrl(qrUrl);
     } catch (err: any) {
-      console.error('Erreur:', err);
       if (err.response?.status === 404) {
         setError('Code de partage invalide ou expiré');
       } else if (err.response?.status === 410) {
-        setError('Ce partage a expiré. Veuillez contacter le photographe.');
+        setError('Ce partage a expiré');
       } else {
-        setError('Erreur lors du chargement des photos');
+        setError('Erreur lors du chargement');
       }
     } finally {
       setLoading(false);
@@ -83,7 +80,6 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
         responseType: 'blob'
       });
 
-      // Créer un lien de téléchargement
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -92,19 +88,13 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
       link.click();
       link.parentNode?.removeChild(link);
 
-      // Marquer comme téléchargée
       setDownloadedPhotos(prev => new Set(prev).add(photoId));
 
-      // Tracker le téléchargement (sans bloquer si erreur)
       try {
         await axios.post(`${API_BASE}/shares/${shareCode}/track-download?photo_id=${photoId}`);
-      } catch (trackErr) {
-        console.error('Erreur tracking:', trackErr);
-        // Continuer même si le tracking échoue
-      }
+      } catch (e) {}
     } catch (err) {
-      console.error('Erreur téléchargement:', err);
-      alert('Erreur lors du téléchargement');
+      alert('Erreur téléchargement');
     } finally {
       setDownloading(null);
     }
@@ -114,200 +104,234 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
     if (!share) return;
     for (const photo of share.selected_photos) {
       await downloadPhoto(photo._id, photo.filename);
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 300));
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-black mb-4"></div>
+          <p className="text-slate-600 font-medium">Chargement...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-red-50">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-red-100">
+        <div className="text-center max-w-md px-4">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-red-900 mb-2">Erreur</h1>
-          <p className="text-red-700">{error}</p>
+          <p className="text-red-700 mb-6">{error}</p>
+          <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Retour
+          </button>
         </div>
       </div>
     );
   }
 
-  if (!share) {
-    return null;
-  }
+  if (!share) return null;
 
   const expiresDate = new Date(share.expires_at);
   const isExpired = expiresDate < new Date();
   const timeRemaining = Math.max(0, Math.floor((expiresDate.getTime() - new Date().getTime()) / 1000 / 3600));
+  const totalSize = (share.selected_photos.reduce((sum, p) => sum + p.file_size, 0) / 1024 / 1024).toFixed(2);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-black to-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold mb-2">Vos photos</h1>
-          <p className="text-gray-300">
-            Retrouvez les photos de votre événement
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Info cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Expiration */}
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              <p className="text-sm text-gray-600">Disponibilité</p>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">📸</h1>
             </div>
-            <p className="text-2xl font-bold">
-              {isExpired ? 'Expiré' : `${timeRemaining}h`}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Expire le {expiresDate.toLocaleString('fr-FR')}
-            </p>
-          </div>
-
-          {/* Photos */}
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-gray-600">Photos</p>
+            <div className="text-right">
+              <h2 className="text-xl font-bold text-slate-900">Vos photos</h2>
+              <p className="text-sm text-slate-500">{share.selected_photos.length} photos • {totalSize} MB</p>
             </div>
-            <p className="text-2xl font-bold">
-              {share.selected_photos.length}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Sélectionnées pour vous
-            </p>
-          </div>
-
-          {/* Taille totale */}
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Download className="h-5 w-5 text-blue-600" />
-              <p className="text-sm text-gray-600">Taille totale</p>
-            </div>
-            <p className="text-2xl font-bold">
-              {(share.selected_photos.reduce((sum, p) => sum + p.file_size, 0) / 1024 / 1024).toFixed(2)} MB
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Qualité haute
-            </p>
-          </div>
-        </div>
-
-        {/* QR Code Section */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-8 mb-12 text-center">
-          <QrCode className="h-8 w-8 text-blue-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-4">📱 Code QR à scanner</h2>
-          <p className="text-gray-600 mb-6">
-            Scannez ce QR code ou visitez l'URL ci-dessous sur votre téléphone
-          </p>
-          <div className="inline-block bg-white p-4 rounded-lg border-2 border-blue-200 mb-6 flex justify-center">
-            <canvas 
-              ref={qrCanvasRef}
-              width={250}
-              height={250}
-              style={{
-                border: '2px solid #e0e7ff',
-                borderRadius: '8px'
-              }}
-            />
-          </div>
-          <p className="text-sm text-gray-600 font-mono break-all bg-white p-3 rounded border border-gray-200">
-            {window.location.origin}/share/{shareCode}
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex gap-4 mb-12 justify-center">
-          <button
-            onClick={downloadAll}
-            disabled={downloading !== null || isExpired}
-            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="h-5 w-5" />
-            Télécharger tout
-          </button>
-          <button
-            onClick={() => navigator.share({ url: window.location.href })}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-bold"
-          >
-            Partager le lien
-          </button>
-        </div>
-
-        {/* Photos Grid */}
-        <h2 className="text-2xl font-bold mb-6">Galerie photos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {share.selected_photos.map((photo) => (
-            <div key={photo._id} className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden group hover:border-black transition-colors">
-              {/* Thumbnail */}
-              <div className="relative bg-gray-100 aspect-square overflow-hidden">
-                <img
-                  src={`http://localhost:8000/api/v1/photos/${photo._id}/thumbnail`}
-                  alt={photo.filename}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  loading="lazy"
-                />
-                {downloadedPhotos.has(photo._id) && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <CheckCircle className="h-8 w-8 text-green-400" />
-                  </div>
-                )}
+            <div className="flex items-center gap-3">
+              {!isExpired && (
+                <button
+                  onClick={() => setShowQR(!showQR)}
+                  className="p-3 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                  title="QR Code"
+                >
+                  <QrCode className="h-5 w-5 text-slate-700" />
+                </button>
+              )}
+              <div className={`text-sm font-bold px-4 py-2 rounded-full ${
+                isExpired ? 'text-red-600 bg-red-50' : 
+                timeRemaining < 12 ? 'text-orange-600 bg-orange-50' : 'text-green-600 bg-green-50'
+              }`}>
+                {isExpired ? '⏰ Expiré' : `⏱️ ${timeRemaining}h`}
               </div>
+            </div>
+          </div>
+        </div>
+      </header>
 
-              {/* Info */}
-              <div className="p-4">
-                <p className="text-sm text-gray-600 truncate mb-3 font-mono">
-                  {photo.filename}
-                </p>
-                <div className="text-xs text-gray-500 mb-4">
-                  <p>Taille: {(photo.file_size / 1024 / 1024).toFixed(2)} MB</p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* QR Modal */}
+        {showQR && (
+          <div className="mb-8 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-8 shadow-lg">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 mb-1">📱 Code QR</h3>
+                <p className="text-sm text-slate-600">Scannez pour accéder à vos photos</p>
+              </div>
+              <button onClick={() => setShowQR(false)} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-8">
+              <div className="flex flex-col items-center justify-center bg-white p-6 rounded-xl border-2 border-blue-300 shadow-sm">
+                <canvas 
+                  ref={qrCanvasRef}
+                  width={250}
+                  height={250}
+                  style={{ borderRadius: '8px' }}
+                />
+              </div>
+              <div className="flex flex-col justify-center gap-4">
+                <div>
+                  <p className="text-xs text-slate-600 mb-2 font-bold uppercase tracking-wide">Lien de partage</p>
+                  <div className="bg-white p-3 rounded-lg border-2 border-blue-200">
+                    <p className="text-xs font-mono text-slate-700 break-all">{window.location.href}</p>
+                  </div>
                 </div>
                 <button
-                  onClick={() => downloadPhoto(photo._id, photo.filename)}
-                  disabled={downloading === photo._id || isExpired}
-                  className="w-full py-2 bg-black text-white rounded hover:bg-gray-900 transition-colors text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('✓ Lien copié !');
+                  }}
+                  className="px-4 py-3 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  {downloading === photo._id ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Téléchargement...
-                    </>
-                  ) : downloadedPhotos.has(photo._id) ? (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Téléchargée
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Télécharger
-                    </>
-                  )}
+                  <Share2 className="h-4 w-4" />
+                  Copier le lien
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Avertissement expiration */}
-        {timeRemaining < 24 && !isExpired && (
-          <div className="mt-12 bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
-            <p className="text-sm text-yellow-800">
-              ⚠️ Ce lien expire dans {timeRemaining} heure(s). Téléchargez vos photos rapidement !
-            </p>
           </div>
         )}
+
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
+            <p className="text-3xl font-bold text-slate-900">{share.selected_photos.length}</p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">PHOTOS</p>
+          </div>
+          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
+            <p className="text-3xl font-bold text-slate-900">{totalSize}</p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">MB</p>
+          </div>
+          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
+            <p className="text-3xl font-bold text-slate-900">{share.downloads_count}</p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">TÉLÉCHARGEMENTS</p>
+          </div>
+          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
+            <p className="text-2xl font-bold text-slate-900">{isExpired ? '❌' : '✓'}</p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">{isExpired ? 'EXPIRÉ' : 'ACTIF'}</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        {!isExpired && (
+          <div className="flex flex-col sm:flex-row gap-3 mb-10">
+            <button
+              onClick={downloadAll}
+              disabled={downloading !== null}
+              className="flex-1 px-6 py-4 bg-gradient-to-r from-slate-900 to-black text-white rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+            >
+              <Download className="h-5 w-5" />
+              Tout télécharger
+            </button>
+            <button
+              onClick={() => navigator.share({ 
+                title: 'Vos photos',
+                url: window.location.href 
+              })}
+              className="flex-1 px-6 py-4 border-2 border-slate-300 bg-white text-slate-900 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 font-bold"
+            >
+              <Share2 className="h-5 w-5" />
+              Partager
+            </button>
+          </div>
+        )}
+
+        {/* Warning */}
+        {timeRemaining < 12 && timeRemaining > 0 && !isExpired && (
+          <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mb-8 flex gap-3">
+            <span className="text-2xl">⏰</span>
+            <div>
+              <p className="font-bold text-orange-900">Attention!</p>
+              <p className="text-sm text-orange-800">Ce lien expire dans {timeRemaining}h</p>
+            </div>
+          </div>
+        )}
+
+        {/* Photos Grid */}
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 mb-6">Galerie</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {share.selected_photos.map((photo) => (
+              <div 
+                key={photo._id} 
+                className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden hover:border-slate-400 hover:shadow-lg transition-all group"
+              >
+                {/* Thumbnail */}
+                <div className="relative bg-slate-100 aspect-square overflow-hidden">
+                  <img
+                    src={`http://localhost:8000/api/v1/photos/${photo._id}/thumbnail`}
+                    alt={photo.filename}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                  {downloadedPhotos.has(photo._id) && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                      <CheckCircle className="h-8 w-8 text-green-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info & Action */}
+                <div className="p-4">
+                  <button
+                    onClick={() => downloadPhoto(photo._id, photo.filename)}
+                    disabled={downloading === photo._id || isExpired}
+                    className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
+                  >
+                    {downloading === photo._id ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span className="hidden sm:inline">Téléchargement</span>
+                      </>
+                    ) : downloadedPhotos.has(photo._id) ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">Téléchargée</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 group-hover/btn:scale-125 transition-transform" />
+                        <span className="hidden sm:inline">Télécharger</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t-2 border-slate-200 text-center text-sm text-slate-600">
+          <p className="font-medium">
+            📸 Photos haute qualité • ✓ Téléchargement sécurisé • {!isExpired && `⏱️ ${timeRemaining}h disponible`}
+          </p>
+        </div>
       </div>
     </div>
   );
