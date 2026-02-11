@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import QRCode from 'qrcode';
 import { Download, QrCode, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import './Gallery.css';
 
@@ -28,12 +29,29 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadedPhotos, setDownloadedPhotos] = useState<Set<string>>(new Set());
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const API_BASE = '/api/v1';
+  const API_BASE = 'http://localhost:8000/api/v1';
 
   useEffect(() => {
     loadShare();
   }, [shareCode]);
+
+  // Générer le QR code après que le partage soit chargé
+  useEffect(() => {
+    if (qrCodeUrl && qrCanvasRef.current) {
+      QRCode.toCanvas(qrCanvasRef.current, qrCodeUrl, {
+        width: 250,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      }).catch((err) => {
+        console.error('Erreur génération QR:', err);
+      });
+    }
+  }, [qrCodeUrl]);
 
   const loadShare = async () => {
     try {
@@ -41,8 +59,8 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
       const res = await axios.get(`${API_BASE}/shares/${shareCode}`);
       setShare(res.data);
 
-      // Générer le QR code (URL partageable)
-      const qrUrl = `${window.location.origin}/share/${shareCode}`;
+      // Générer le URL du partage partageable
+      const qrUrl = `http://localhost:3000/share/${shareCode}`;
       setQrCodeUrl(qrUrl);
     } catch (err: any) {
       console.error('Erreur:', err);
@@ -76,6 +94,14 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
 
       // Marquer comme téléchargée
       setDownloadedPhotos(prev => new Set(prev).add(photoId));
+
+      // Tracker le téléchargement (sans bloquer si erreur)
+      try {
+        await axios.post(`${API_BASE}/shares/${shareCode}/track-download?photo_id=${photoId}`);
+      } catch (trackErr) {
+        console.error('Erreur tracking:', trackErr);
+        // Continuer même si le tracking échoue
+      }
     } catch (err) {
       console.error('Erreur téléchargement:', err);
       alert('Erreur lors du téléchargement');
@@ -181,19 +207,20 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
         {/* QR Code Section */}
         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-8 mb-12 text-center">
           <QrCode className="h-8 w-8 text-blue-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-4">Partager ce lien</h2>
+          <h2 className="text-xl font-bold mb-4">📱 Code QR à scanner</h2>
           <p className="text-gray-600 mb-6">
             Scannez ce QR code ou visitez l'URL ci-dessous sur votre téléphone
           </p>
-          <div className="inline-block bg-white p-4 rounded-lg border-2 border-blue-200 mb-6">
-            <div className="w-48 h-48 bg-white rounded flex items-center justify-center">
-              {/* Pseudo QR code - en prod utiliser une librairie QR */}
-              <div className="text-center">
-                <p className="text-xs text-gray-600 font-mono break-all">
-                  {shareCode}
-                </p>
-              </div>
-            </div>
+          <div className="inline-block bg-white p-4 rounded-lg border-2 border-blue-200 mb-6 flex justify-center">
+            <canvas 
+              ref={qrCanvasRef}
+              width={250}
+              height={250}
+              style={{
+                border: '2px solid #e0e7ff',
+                borderRadius: '8px'
+              }}
+            />
           </div>
           <p className="text-sm text-gray-600 font-mono break-all bg-white p-3 rounded border border-gray-200">
             {window.location.origin}/share/{shareCode}
@@ -226,9 +253,10 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
               {/* Thumbnail */}
               <div className="relative bg-gray-100 aspect-square overflow-hidden">
                 <img
-                  src={`/api/v1/photos/${photo._id}/thumbnail`}
+                  src={`http://localhost:8000/api/v1/photos/${photo._id}/thumbnail`}
                   alt={photo.filename}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  loading="lazy"
                 />
                 {downloadedPhotos.has(photo._id) && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">

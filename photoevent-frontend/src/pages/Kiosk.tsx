@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import QRCode from 'qrcode'
 import './Kiosk.css'
 
 interface SearchResult {
@@ -29,6 +30,7 @@ function Kiosk() {
   const [generatingShare, setGeneratingShare] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [similarityThreshold, setSimilarityThreshold] = useState(0.20)
 
@@ -194,7 +196,7 @@ function Kiosk() {
 
   const downloadPhoto = (filename: string) => {
     const link = document.createElement('a')
-    link.href = `/uploads/photos/${filename}`
+    link.href = `http://localhost:8000/uploads/photos/${filename}`
     link.download = filename
     document.body.appendChild(link)
     link.click()
@@ -211,23 +213,70 @@ function Kiosk() {
     setError('')
 
     try {
+      // Récupérer l'event ID
       const eventsResponse = await axios.get(`http://localhost:8000/api/v1/events/code/${eventCode.toUpperCase()}`)
       const event = eventsResponse.data
 
-      const response = await axios.post('http://localhost:8000/api/v1/shares', {
+      console.log('📤 Création du partage...')
+      console.log('Event ID:', event.id)
+      console.log('Photos sélectionnées:', Array.from(selectedPhotos))
+
+      const payload = {
         event_id: event.id,
         face_id: 'auto_detected',
         selected_photo_ids: Array.from(selectedPhotos)
-      })
+      }
+
+      console.log('📝 Payload:', JSON.stringify(payload, null, 2))
+
+      const response = await axios.post('http://localhost:8000/api/v1/shares', payload)
+
+      console.log('✅ Partage créé:', response.data)
+
+      const shareCode = response.data.share_code
+      const shareUrl = `http://localhost:3000/share/${shareCode}`
+
+      console.log('🔗 Share URL:', shareUrl)
+      console.log('📱 Début de génération du QR code...')
 
       setShareData({
-        share_code: response.data.share_code,
+        share_code: shareCode,
         expires_at: response.data.expires_at,
         photos_count: selectedPhotos.size
       })
+
+      // Générer le QR code après un délai pour permettre au DOM de rendre le canvas
+      setTimeout(async () => {
+        if (qrCanvasRef.current) {
+          try {
+            console.log('Canvas ref availability: TRUE')
+            await QRCode.toCanvas(qrCanvasRef.current, shareUrl, {
+              width: 300,
+              margin: 2,
+              color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+              }
+            })
+            console.log('✅ QR code généré avec succès')
+          } catch (qrError: any) {
+            console.error('❌ Erreur génération QR:', qrError)
+          }
+        } else {
+          console.error('❌ Canvas ref not found - Attendez quelques secondes et réessayez')
+        }
+      }, 100)
     } catch (error: any) {
-      console.error('Erreur génération share:', error)
-      setError('❌ Erreur lors de la génération du code de partage')
+      console.error('❌ Erreur génération share:')
+      console.error('Status:', error.response?.status)
+      console.error('Data:', error.response?.data)
+      console.error('Full error:', error)
+      
+      const errorMsg = error.response?.data?.detail || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      'Erreur inconnue'
+      setError(`❌ Erreur : ${errorMsg}`)
     } finally {
       setGeneratingShare(false)
     }
@@ -245,7 +294,7 @@ function Kiosk() {
   }
 
   const printPhoto = (filename: string) => {
-    const url = `/uploads/photos/${filename}`
+    const url = `http://localhost:8000/uploads/photos/${filename}`
     const printWindow = window.open(url, '_blank')
     if (printWindow) {
       printWindow.onload = () => {
@@ -379,7 +428,7 @@ function Kiosk() {
                 >
                   <div className="photo-wrapper">
                     <img 
-                      src={`/uploads/photos/${result.filename}`}
+                      src={`http://localhost:8000/uploads/photos/${result.filename}`}
                       alt="Photo trouvée"
                       className="photo-image"
                       onError={(e) => {
@@ -463,12 +512,35 @@ function Kiosk() {
                 <h2 style={{textAlign: 'center', marginBottom: '30px', fontSize: '32px'}}>✨ Code de partage généré</h2>
                 
                 <div className="share-grid">
+                  {/* QR Code Section */}
+                  <div className="qr-section" style={{textAlign: 'center', padding: '30px', backgroundColor: '#f9f9f9', borderRadius: '12px', marginBottom: '30px'}}>
+                    <h3 style={{marginTop: 0, marginBottom: '20px'}}>📱 Code QR à scanner</h3>
+                    <div style={{display: 'flex', justifyContent: 'center'}}>
+                      <canvas 
+                        ref={qrCanvasRef} 
+                        width={320}
+                        height={320}
+                        style={{
+                          border: '4px solid #2563EB',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          backgroundColor: 'white',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                          display: 'block'
+                        }}
+                      />
+                    </div>
+                    <p style={{marginTop: '20px', color: '#666', fontSize: '14px'}}>
+                      ☝️ Scannez ce code QR avec un smartphone pour accéder aux photos
+                    </p>
+                  </div>
+
                   {/* Share Info Section */}
                   <div className="share-info" style={{gridColumn: '1 / -1'}}>
                     <div className="info-card">
-                      <h3>📸 Informations</h3>
+                      <h3>📸 Informations de partage</h3>
                       <div className="info-item">
-                        <span className="label">Code partagé :</span>
+                        <span className="label">Code :</span>
                         <span className="value" style={{fontFamily: 'monospace', fontWeight: 'bold', color: '#2563EB'}}>{shareData.share_code}</span>
                       </div>
                       <div className="info-item">
@@ -476,12 +548,22 @@ function Kiosk() {
                         <span className="value">{shareData.photos_count}</span>
                       </div>
                       <div className="info-item">
-                        <span className="label">Expires :</span>
-                        <span className="value">Dans 48 heures</span>
+                        <span className="label">Valide :</span>
+                        <span className="value">48 heures ⏰</span>
                       </div>
                       <div className="info-item">
                         <span className="label">Lien :</span>
-                        <div style={{wordBreak: 'break-all', fontSize: '12px', color: '#2563EB', fontWeight: 'bold', marginTop: '8px'}}>
+                        <div style={{
+                          wordBreak: 'break-all', 
+                          fontSize: '13px', 
+                          color: '#2563EB', 
+                          fontWeight: 'bold', 
+                          marginTop: '8px',
+                          padding: '10px',
+                          backgroundColor: '#EFF6FF',
+                          borderRadius: '6px',
+                          border: '1px solid #BFDBFE'
+                        }}>
                           {window.location.origin}/share/{shareData.share_code}
                         </div>
                       </div>
@@ -489,12 +571,12 @@ function Kiosk() {
 
                     {/* Selected Photos Preview */}
                     <div style={{marginTop: '30px', backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '12px'}}>
-                      <h3 style={{marginTop: 0}}>📷 Photos sélectionnées ({selectedPhotos.size})</h3>
+                      <h3 style={{marginTop: 0}}>📷 Photos partagées ({selectedPhotos.size})</h3>
                       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px', marginTop: '15px'}}>
                         {searchResults.filter(r => selectedPhotos.has(r.photo_id)).map((photo, idx) => (
                           <div key={photo.photo_id} style={{position: 'relative'}}>
                             <img 
-                              src={`/uploads/photos/${photo.filename}`}
+                              src={`http://localhost:8000/uploads/photos/${photo.filename}`}
                               alt={`Photo ${idx + 1}`}
                               style={{width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #2563EB'}}
                             />
@@ -512,28 +594,31 @@ function Kiosk() {
                 <div style={{display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '40px', flexWrap: 'wrap'}}>
                   <button 
                     onClick={() => {
-                      const text = `Owen'Snap - Récupérez vos photos!\n\n${window.location.origin}/share/${shareData.share_code}\n\nCode: ${shareData.share_code}`
+                      const text = `Owen'Snap - Vos photos sont prêtes!\n\n${window.location.origin}/share/${shareData.share_code}\n\nCode: ${shareData.share_code}`
                       navigator.clipboard.writeText(text)
                       alert('✅ Lien copié dans le presse-papiers!')
                     }}
                     className="btn-primary"
-                    style={{padding: '15px 30px'}}
+                    style={{padding: '15px 30px', fontSize: '16px'}}
                   >
                     📋 Copier le lien
                   </button>
                   <button 
-                    onClick={resetAndStartOver}
-                    className="btn-secondary"
-                    style={{padding: '15px 30px'}}
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}/share/${shareData.share_code}`
+                      window.open(shareUrl, '_blank')
+                    }}
+                    className="btn-primary"
+                    style={{padding: '15px 30px', fontSize: '16px'}}
                   >
-                    🔄 Nouveau scan
+                    🌐 Ouvrir dans le navigateur
                   </button>
                   <button 
-                    onClick={() => navigate('/')}
+                    onClick={resetAndStartOver}
                     className="btn-secondary"
-                    style={{padding: '15px 30px'}}
+                    style={{padding: '15px 30px', fontSize: '16px'}}
                   >
-                    🏠 Accueil
+                    🔄 Nouveau scan
                   </button>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Upload, X, Trash2, Grid3x3, List, Plus, BarChart3, Calendar, Image as ImageIcon, Menu, ChevronRight, Copy, Search, Hash, Folder, CheckCircle, ChevronDown } from 'lucide-react';
+import { Upload, Trash2, Grid3x3, List, Plus, BarChart3, Calendar, Image as ImageIcon, Menu, Copy, Search, Folder, CheckCircle, Download } from 'lucide-react';
 
 interface Event {
   id?: string | number;
@@ -39,6 +39,8 @@ interface Stats {
   today_photos?: number;
   events_today?: number;
   total_faces?: number;
+  total_downloads?: number;
+  total_shares?: number;
   recent_events?: Array<any>;
   events?: Array<any>;
   avg_photo_size_mb?: number;
@@ -415,7 +417,7 @@ export default function AdminPanel() {
         {tab === 'dashboard' && (
           <div className="p-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-8 rounded-lg border border-blue-200">
                 <div className="flex justify-between items-start mb-4">
                   <div>
@@ -459,6 +461,17 @@ export default function AdminPanel() {
                 </div>
                 <p className="text-xs text-orange-600">Uploadées aujourd'hui</p>
               </div>
+
+              <div className="bg-gradient-to-br from-red-50 to-red-100 px-6 py-8 rounded-lg border border-red-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-red-700 text-sm font-medium">Téléchargements</p>
+                    <p className="text-4xl font-light text-red-900 mt-2">{stats?.total_downloads || 0}</p>
+                  </div>
+                  <Download className="h-10 w-10 text-red-300" />
+                </div>
+                <p className="text-xs text-red-600">Total des téléchargements</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
@@ -472,13 +485,14 @@ export default function AdminPanel() {
                         <th className="text-left py-2 px-3 font-medium text-gray-700">Événement</th>
                         <th className="text-center py-2 px-3 font-medium text-gray-700">Photos</th>
                         <th className="text-center py-2 px-3 font-medium text-gray-700">Visages</th>
+                        <th className="text-center py-2 px-3 font-medium text-gray-700">Téléchargements</th>
                         <th className="text-right py-2 px-3 font-medium text-gray-700">Espace</th>
                         <th className="text-right py-2 px-3 font-medium text-gray-700">Moy/Photo</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {stats?.events && stats.events.length > 0 ? (
-                        stats.events.map((event: any) => (
+                      {stats?.recent_events && stats.recent_events.length > 0 ? (
+                        stats.recent_events.map((event: any) => (
                           <tr key={event.id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-3 px-3">
                               <div>
@@ -490,6 +504,11 @@ export default function AdminPanel() {
                             <td className="text-center py-3 px-3">
                               <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">
                                 {event.faces_count}
+                              </span>
+                            </td>
+                            <td className="text-center py-3 px-3">
+                              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                                {event.downloads_count || 0}
                               </span>
                             </td>
                             <td className="text-right py-3 px-3">
@@ -504,7 +523,7 @@ export default function AdminPanel() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={5} className="text-center py-4 text-gray-500">
+                          <td colSpan={6} className="text-center py-4 text-gray-500">
                             Aucun événement
                           </td>
                         </tr>
@@ -670,7 +689,7 @@ export default function AdminPanel() {
                       key={eventId}
                       className="bg-white rounded-xl border border-gray-200 hover:border-black hover:shadow-lg transition-all group cursor-pointer overflow-hidden"
                       onClick={() => {
-                        setSelectedEvent(eventId);
+                        if (eventId) setSelectedEvent(eventId);
                         setTab('photos');
                       }}
                     >
@@ -728,7 +747,7 @@ export default function AdminPanel() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedEvent(eventId);
+                            if (eventId) setSelectedEvent(eventId);
                             setTab('photos');
                           }}
                           className="w-full px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium flex items-center justify-center gap-2"
@@ -820,7 +839,7 @@ export default function AdminPanel() {
                                   <button
                                     key={eventId}
                                     onClick={() => {
-                                      setSelectedEvent(eventId);
+                                      if (eventId) setSelectedEvent(eventId);
                                       setEventDropdownOpen(false);
                                       setEventSearchQuery('');
                                     }}

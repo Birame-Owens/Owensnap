@@ -148,3 +148,88 @@ async def delete_event(event_id: int, db: Session = Depends(get_db)):
     db.delete(event)
     db.commit()
 
+
+@router.get("/admin/stats", tags=["admin"])
+async def get_admin_stats(db: Session = Depends(get_db)):
+    """
+    Statistiques d'administration pour le dashboard
+    Retourne les comptes globaux et les événements récents
+    """
+    mongo_db = get_mongodb()
+    
+    # Comptes PostgreSQL
+    total_events = db.query(func.count(Event.id)).scalar() or 0
+    
+    # Comptes MongoDB
+    photos_collection = mongo_db.photos
+    faces_collection = mongo_db.faces
+    shares_collection = mongo_db.shares
+    
+    total_photos = photos_collection.count_documents({})
+    total_faces = faces_collection.count_documents({})
+    total_shares = shares_collection.count_documents({})
+    total_downloads = 0
+    
+    # Calculer l'espace total utilisé (en MB) et les téléchargements
+    total_storage_mb = 0
+    all_photos = list(photos_collection.find({}, {"file_size": 1}))
+    for photo in all_photos:
+        total_storage_mb += photo.get("file_size", 0)
+    total_storage_mb = round(total_storage_mb / (1024 * 1024), 2)
+    
+    # Compter les téléchargements totaux
+    all_shares = list(shares_collection.find({}, {"downloads_count": 1}))
+    for share in all_shares:
+        total_downloads += share.get("downloads_count", 0)
+    
+    # Taille moyenne par photo
+    avg_photo_size_mb = round(total_storage_mb / max(total_photos, 1), 2)
+    
+    # Récupérer les événements récents avec statistiques
+    recent_events = db.query(Event).order_by(desc(Event.date)).limit(10).all()
+    
+    events_data = []
+    for event in recent_events:
+        event_photos = photos_collection.count_documents({"event_id": event.id})
+        event_faces = faces_collection.count_documents({"event_id": event.id})
+        event_shares = shares_collection.count_documents({"event_id": event.id})
+        event_downloads = 0
+        event_storage_mb = 0
+        
+        # Compter les téléchargements et l'espace utilisé pour cet événement
+        event_shares_list = list(shares_collection.find({"event_id": event.id}, {"downloads_count": 1}))
+        for share in event_shares_list:
+            event_downloads += share.get("downloads_count", 0)
+        
+        # Calculer le stockage pour cet événement
+        event_photos_list = list(photos_collection.find({"event_id": event.id}, {"file_size": 1}))
+        for photo in event_photos_list:
+            event_storage_mb += photo.get("file_size", 0)
+        event_storage_mb = round(event_storage_mb / (1024 * 1024), 2)
+        
+        # Taille moyenne par photo dans cet événement
+        event_avg_photo_size_mb = round(event_storage_mb / max(event_photos, 1), 2)
+        
+        events_data.append({
+            "id": event.id,
+            "code": event.code,
+            "name": event.name,
+            "date": event.date.isoformat() if event.date else None,
+            "photo_count": event_photos,
+            "faces_count": event_faces,
+            "shares_count": event_shares,
+            "downloads_count": event_downloads,
+            "storage_mb": event_storage_mb,
+            "avg_photo_size_mb": event_avg_photo_size_mb
+        })
+    
+    return {
+        "total_events": total_events,
+        "total_photos": total_photos,
+        "total_faces": total_faces,
+        "total_storage_mb": total_storage_mb,
+        "avg_photo_size_mb": avg_photo_size_mb,
+        "total_shares": total_shares,
+        "total_downloads": total_downloads,
+        "recent_events": events_data
+    }

@@ -2,6 +2,7 @@
 Routes API pour les photos
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Depends, Form
+from fastapi.responses import StreamingResponse
 from typing import List
 from sqlalchemy.orm import Session
 import os
@@ -529,7 +530,7 @@ async def download_photo_high_quality(photo_id: str):
     Télécharger une photo en haute qualité (85% JPEG, aucune dégradation)
     Utilisé pour les galeries partagées
     """
-    from fastapi.responses import FileResponse
+    from fastapi.responses import FileResponse, StreamingResponse
     
     try:
         mongo_id = ObjectId(photo_id)
@@ -566,12 +567,18 @@ async def download_photo_high_quality(photo_id: str):
     if not file_path.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Fichier photo introuvable sur le serveur"
+            detail=f"Fichier introuvable: {file_path}"
         )
     
     # Lire le fichier
-    with open(file_path, "rb") as f:
-        file_content = f.read()
+    try:
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lecture fichier: {str(e)}"
+        )
     
     # Re-compresser en qualité 85% pour HQ sans aller au original (peut être PNG/TIFF énorme)
     try:
@@ -593,24 +600,30 @@ async def download_photo_high_quality(photo_id: str):
         file_content = output.getvalue()
     except Exception as e:
         print(f"Erreur re-compression HQ: {e}")
-        # Si erreur, renvoyer simplement le fichier original
+        # Si erreur, utiliser simplement le fichier original
         pass
     
     # Retourner le fichier
     filename = photo.get("filename", "photo.jpg")
-    return FileResponse(
-        io.BytesIO(file_content),
+    
+    # Utiliser streaming pour éviter les problèmes de mémoire
+    async def iterfile():
+        yield file_content
+    
+    return StreamingResponse(
+        iterfile(),
         media_type="image/jpeg",
-        filename=filename
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
 
 
 @router.get("/{photo_id}/thumbnail")
 async def get_photo_thumbnail(photo_id: str):
     """
-    Récupérer une miniature de la photo
+    Récupérer une miniature de la photo (200x200)
     """
-    from fastapi.responses import FileResponse
+    from fastapi.responses import StreamingResponse
     
     try:
         mongo_id = ObjectId(photo_id)
@@ -647,7 +660,7 @@ async def get_photo_thumbnail(photo_id: str):
     if not file_path.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Fichier photo introuvable sur le serveur"
+            detail=f"Fichier introuvable: {file_path}"
         )
     
     # Créer une miniature
@@ -665,16 +678,21 @@ async def get_photo_thumbnail(photo_id: str):
             img = background
         
         output = io.BytesIO()
-        img.save(output, format='JPEG', quality=60, optimize=False)
+        img.save(output, format='JPEG', quality=80, optimize=False)
         output.seek(0)
+        thumbnail_content = output.getvalue()
         
-        return FileResponse(
-            output,
+        # Utiliser streaming
+        async def iterfile():
+            yield thumbnail_content
+        
+        return StreamingResponse(
+            iterfile(),
             media_type="image/jpeg"
         )
     except Exception as e:
         print(f"Erreur création thumbnail: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur création miniature"
+            detail=f"Erreur création miniature: {str(e)}"
         )
