@@ -415,79 +415,79 @@ export default function AdminPanel() {
 
         {/* Dashboard Tab */}
         {tab === 'dashboard' && (
-          <div className="p-8">
+          <div className="p-8 bg-white">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-8 rounded-lg border border-blue-200">
+              <div className="bg-white border border-slate-200 px-6 py-8 rounded-lg hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-blue-700 text-sm font-medium">Événements</p>
-                    <p className="text-4xl font-light text-blue-900 mt-2">{stats?.total_events || 0}</p>
+                    <p className="text-slate-700 text-sm font-medium">Événements</p>
+                    <p className="text-4xl font-light text-black mt-2">{stats?.total_events || 0}</p>
                   </div>
-                  <Calendar className="h-10 w-10 text-blue-300" />
+                  <Calendar className="h-10 w-10 text-slate-400" />
                 </div>
-                <p className="text-xs text-blue-600">Événements créés au total</p>
+                <p className="text-xs text-slate-600">Événements créés au total</p>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 px-6 py-8 rounded-lg border border-purple-200">
+              <div className="bg-white border border-slate-200 px-6 py-8 rounded-lg hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-purple-700 text-sm font-medium">Photos</p>
-                    <p className="text-4xl font-light text-purple-900 mt-2">{stats?.total_photos || 0}</p>
+                    <p className="text-slate-700 text-sm font-medium">Photos</p>
+                    <p className="text-4xl font-light text-black mt-2">{stats?.total_photos || 0}</p>
                   </div>
-                  <ImageIcon className="h-10 w-10 text-purple-300" />
+                  <ImageIcon className="h-10 w-10 text-slate-400" />
                 </div>
-                <p className="text-xs text-purple-600">Photos uploadées</p>
+                <p className="text-xs text-slate-600">Photos uploadées</p>
               </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 px-6 py-8 rounded-lg border border-green-200">
+              <div className="bg-white border border-slate-200 px-6 py-8 rounded-lg hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-green-700 text-sm font-medium">Espace utilisé</p>
-                    <p className="text-4xl font-light text-green-900 mt-2">{(stats?.estimated_storage_mb || stats?.total_storage_mb || 0).toFixed(1)}</p>
-                    <p className="text-xs text-green-600 mt-1">MB</p>
+                    <p className="text-slate-700 text-sm font-medium">Espace utilisé</p>
+                    <p className="text-4xl font-light text-black mt-2">{(stats?.estimated_storage_mb || stats?.total_storage_mb || 0).toFixed(1)}</p>
+                    <p className="text-xs text-slate-600 mt-1">MB</p>
                   </div>
-                  <BarChart3 className="h-10 w-10 text-green-300" />
+                  <BarChart3 className="h-10 w-10 text-slate-400" />
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 px-6 py-8 rounded-lg border border-orange-200">
+              <div className="bg-white border border-slate-200 px-6 py-8 rounded-lg hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-orange-700 text-sm font-medium">Photos aujourd'hui</p>
-                    <p className="text-4xl font-light text-orange-900 mt-2">{stats?.today_photos || stats?.events_today || 0}</p>
+                    <p className="text-slate-700 text-sm font-medium">Photos aujourd'hui</p>
+                    <p className="text-4xl font-light text-black mt-2">{stats?.today_photos || stats?.events_today || 0}</p>
                   </div>
-                  <Calendar className="h-10 w-10 text-orange-300" />
+                  <Calendar className="h-10 w-10 text-slate-400" />
                 </div>
-                <p className="text-xs text-orange-600">Uploadées aujourd'hui</p>
+                <p className="text-xs text-slate-600">Uploadées aujourd'hui</p>
               </div>
 
-              <div className="bg-gradient-to-br from-red-50 to-red-100 px-6 py-8 rounded-lg border border-red-200">
+              <div className="bg-white border border-slate-200 px-6 py-8 rounded-lg hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-red-700 text-sm font-medium">Téléchargements</p>
-                    <p className="text-4xl font-light text-red-900 mt-2">{stats?.total_downloads || 0}</p>
+                    <p className="text-slate-700 text-sm font-medium">Téléchargements</p>
+                    <p className="text-4xl font-light text-black mt-2">{stats?.total_downloads || 0}</p>
                   </div>
-                  <Download className="h-10 w-10 text-red-300" />
+                  <Download className="h-10 w-10 text-slate-400" />
                 </div>
-                <p className="text-xs text-red-600">Total des téléchargements</p>
+                <p className="text-xs text-slate-600">Total des téléchargements</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
               {/* Storage by Events */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">📊 Espace par événement</h3>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Espace par événement</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">Événement</th>
-                        <th className="text-center py-2 px-3 font-medium text-gray-700">Photos</th>
-                        <th className="text-center py-2 px-3 font-medium text-gray-700">Visages</th>
-                        <th className="text-center py-2 px-3 font-medium text-gray-700">Téléchargements</th>
-                        <th className="text-right py-2 px-3 font-medium text-gray-700">Espace</th>
-                        <th className="text-right py-2 px-3 font-medium text-gray-700">Moy/Photo</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-800">Événement</th>
+                        <th className="text-center py-2 px-3 font-medium text-gray-800">Photos</th>
+                        <th className="text-center py-2 px-3 font-medium text-gray-800">Visages</th>
+                        <th className="text-center py-2 px-3 font-medium text-gray-800">Téléchargements</th>
+                        <th className="text-right py-2 px-3 font-medium text-gray-800">Espace</th>
+                        <th className="text-right py-2 px-3 font-medium text-gray-800">Moy/Photo</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -497,10 +497,10 @@ export default function AdminPanel() {
                             <td className="py-3 px-3">
                               <div>
                                 <p className="font-medium text-gray-900">{event.name}</p>
-                                <p className="text-xs text-gray-500">{event.code}</p>
+                                <p className="text-xs text-gray-600">{event.code}</p>
                               </div>
                             </td>
-                            <td className="text-center py-3 px-3">{event.photo_count}</td>
+                            <td className="text-center py-3 px-3 text-gray-900">{event.photo_count}</td>
                             <td className="text-center py-3 px-3">
                               <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">
                                 {event.faces_count}
@@ -516,14 +516,14 @@ export default function AdminPanel() {
                                 {event.storage_mb} MB
                               </span>
                             </td>
-                            <td className="text-right py-3 px-3 text-gray-600">
+                            <td className="text-right py-3 px-3 text-gray-900">
                               {event.avg_photo_size_mb} MB
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={6} className="text-center py-4 text-gray-500">
+                          <td colSpan={6} className="text-center py-4 text-gray-600">
                             Aucun événement
                           </td>
                         </tr>
@@ -580,7 +580,7 @@ export default function AdminPanel() {
               </div>
 
               {/* Recent Activities */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Activités récentes</h3>
                 <div className="space-y-3 max-h-80 overflow-y-auto">
                   {recentActivities.length > 0 ? (
