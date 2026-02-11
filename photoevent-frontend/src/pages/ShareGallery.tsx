@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import QRCode from 'qrcode';
-import { Download, QrCode, Clock, CheckCircle, AlertCircle, Share2, ArrowRight } from 'lucide-react';
+import { Download, QrCode, CheckCircle, AlertCircle, Share2 } from 'lucide-react';
 import './Gallery.css';
 
 interface Photo {
@@ -43,7 +43,7 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
       setTimeout(() => {
         if (qrCanvasRef.current && qrCodeUrl) {
           QRCode.toCanvas(qrCanvasRef.current, qrCodeUrl, {
-            width: 250,
+            width: 220,
             margin: 2,
             color: { dark: '#000000', light: '#FFFFFF' },
             errorCorrectionLevel: 'H'
@@ -110,10 +110,10 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
-          <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-black mb-4"></div>
-          <p className="text-slate-600 font-medium">Chargement...</p>
+          <div className="inline-flex h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900 mb-4"></div>
+          <p className="text-slate-600 font-light text-sm tracking-wide">Chargement en cours</p>
         </div>
       </div>
     );
@@ -121,13 +121,13 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-red-100">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center max-w-md px-4">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-red-900 mb-2">Erreur</h1>
-          <p className="text-red-700 mb-6">{error}</p>
-          <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-            Retour
+          <div className="text-4xl mb-4">⚠</div>
+          <h1 className="text-xl font-light text-slate-900 tracking-tight mb-2">Erreur</h1>
+          <p className="text-sm text-slate-600 mb-6">{error}</p>
+          <button onClick={() => window.location.href = '/'} className="px-6 py-2 bg-slate-900 text-white text-sm font-normal hover:bg-black transition-colors">
+            Retourner
           </button>
         </div>
       </div>
@@ -142,74 +142,69 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
   const totalSize = (share.selected_photos.reduce((sum, p) => sum + p.file_size, 0) / 1024 / 1024).toFixed(2);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <header className="bg-white border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">📸</h1>
+              <h1 className="text-2xl font-light text-slate-900 tracking-tight">OWEN'SNAP</h1>
+              <p className="text-xs text-slate-500 font-normal mt-1">Galerie temporaire</p>
             </div>
-            <div className="text-right">
-              <h2 className="text-xl font-bold text-slate-900">Vos photos</h2>
-              <p className="text-sm text-slate-500">{share.selected_photos.length} photos • {totalSize} MB</p>
-            </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-6">
               {!isExpired && (
                 <button
                   onClick={() => setShowQR(!showQR)}
-                  className="p-3 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-                  title="QR Code"
+                  className="text-slate-600 hover:text-slate-900 transition-colors"
+                  title="Code QR"
                 >
-                  <QrCode className="h-5 w-5 text-slate-700" />
+                  <QrCode className="h-5 w-5" />
                 </button>
               )}
-              <div className={`text-sm font-bold px-4 py-2 rounded-full ${
-                isExpired ? 'text-red-600 bg-red-50' : 
-                timeRemaining < 12 ? 'text-orange-600 bg-orange-50' : 'text-green-600 bg-green-50'
+              <div className={`text-xs font-normal tracking-wide ${
+                isExpired ? 'text-red-600' : 
+                timeRemaining < 12 ? 'text-orange-600' : 'text-slate-600'
               }`}>
-                {isExpired ? '⏰ Expiré' : `⏱️ ${timeRemaining}h`}
+                {isExpired ? 'EXPIRÉ' : `${timeRemaining}H RESTANT`}
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* QR Modal */}
         {showQR && (
-          <div className="mb-8 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-8 shadow-lg">
-            <div className="flex items-start justify-between mb-6">
+          <div className="mb-12 bg-white border border-slate-200 p-8">
+            <div className="flex items-start justify-between mb-8">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">📱 Code QR</h3>
-                <p className="text-sm text-slate-600">Scannez pour accéder à vos photos</p>
+                <h3 className="text-sm font-normal text-slate-900 tracking-wide">PARTAGER</h3>
               </div>
-              <button onClick={() => setShowQR(false)} className="text-slate-400 hover:text-slate-600 text-2xl">✕</button>
+              <button onClick={() => setShowQR(false)} className="text-slate-400 hover:text-slate-900 text-lg">✕</button>
             </div>
-            <div className="grid sm:grid-cols-2 gap-8">
-              <div className="flex flex-col items-center justify-center bg-white p-6 rounded-xl border-2 border-blue-300 shadow-sm">
+            <div className="grid sm:grid-cols-2 gap-12">
+              <div className="flex flex-col items-center justify-center bg-slate-50 p-8 border border-slate-200">
                 <canvas 
                   ref={qrCanvasRef}
-                  width={250}
-                  height={250}
-                  style={{ borderRadius: '8px' }}
+                  width={220}
+                  height={220}
+                  style={{ borderRadius: '2px' }}
                 />
               </div>
-              <div className="flex flex-col justify-center gap-4">
+              <div className="flex flex-col justify-center gap-6">
                 <div>
-                  <p className="text-xs text-slate-600 mb-2 font-bold uppercase tracking-wide">Lien de partage</p>
-                  <div className="bg-white p-3 rounded-lg border-2 border-blue-200">
-                    <p className="text-xs font-mono text-slate-700 break-all">{window.location.href}</p>
+                  <p className="text-xs text-slate-600 mb-3 font-normal tracking-wide">LIEN</p>
+                  <div className="bg-slate-50 p-4 border border-slate-200">
+                    <p className="text-xs font-mono text-slate-700 break-all leading-relaxed">{window.location.href}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(window.location.href);
-                    alert('✓ Lien copié !');
+                    alert('Copié');
                   }}
-                  className="px-4 py-3 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-slate-900 text-white text-xs font-normal hover:bg-black transition-colors"
                 >
-                  <Share2 className="h-4 w-4" />
                   Copier le lien
                 </button>
               </div>
@@ -218,44 +213,44 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
         )}
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
-            <p className="text-3xl font-bold text-slate-900">{share.selected_photos.length}</p>
-            <p className="text-xs text-slate-500 mt-1 font-medium">PHOTOS</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-12">
+          <div className="bg-white border border-slate-200 p-6 text-center hover:border-slate-400 transition-colors">
+            <p className="text-2xl font-light text-slate-900">{share.selected_photos.length}</p>
+            <p className="text-xs text-slate-600 mt-2 font-normal tracking-wide">PHOTOS</p>
           </div>
-          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
-            <p className="text-3xl font-bold text-slate-900">{totalSize}</p>
-            <p className="text-xs text-slate-500 mt-1 font-medium">MB</p>
+          <div className="bg-white border border-slate-200 p-6 text-center hover:border-slate-400 transition-colors">
+            <p className="text-2xl font-light text-slate-900">{totalSize}</p>
+            <p className="text-xs text-slate-600 mt-2 font-normal tracking-wide">MB</p>
           </div>
-          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
-            <p className="text-3xl font-bold text-slate-900">{share.downloads_count}</p>
-            <p className="text-xs text-slate-500 mt-1 font-medium">TÉLÉCHARGEMENTS</p>
+          <div className="bg-white border border-slate-200 p-6 text-center hover:border-slate-400 transition-colors">
+            <p className="text-2xl font-light text-slate-900">{share.downloads_count}</p>
+            <p className="text-xs text-slate-600 mt-2 font-normal tracking-wide">TÉLÉCHARGEMENTS</p>
           </div>
-          <div className="bg-white border-2 border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors">
-            <p className="text-2xl font-bold text-slate-900">{isExpired ? '❌' : '✓'}</p>
-            <p className="text-xs text-slate-500 mt-1 font-medium">{isExpired ? 'EXPIRÉ' : 'ACTIF'}</p>
+          <div className="bg-white border border-slate-200 p-6 text-center hover:border-slate-400 transition-colors">
+            <p className="text-2xl font-light text-slate-900">{isExpired ? '−' : '✓'}</p>
+            <p className="text-xs text-slate-600 mt-2 font-normal tracking-wide">{isExpired ? 'EXPIRÉ' : 'ACTIF'}</p>
           </div>
         </div>
 
         {/* Action Buttons */}
         {!isExpired && (
-          <div className="flex flex-col sm:flex-row gap-3 mb-10">
+          <div className="flex flex-col sm:flex-row gap-4 mb-12">
             <button
               onClick={downloadAll}
               disabled={downloading !== null}
-              className="flex-1 px-6 py-4 bg-gradient-to-r from-slate-900 to-black text-white rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+              className="flex-1 px-6 py-4 bg-slate-900 text-white text-sm font-normal hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <Download className="h-5 w-5" />
-              Tout télécharger
+              <Download className="h-4 w-4" />
+              Télécharger tout
             </button>
             <button
               onClick={() => navigator.share({ 
-                title: 'Vos photos',
+                title: 'Galerie photos',
                 url: window.location.href 
               })}
-              className="flex-1 px-6 py-4 border-2 border-slate-300 bg-white text-slate-900 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 font-bold"
+              className="flex-1 px-6 py-4 border border-slate-300 bg-white text-slate-900 text-sm font-normal hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
             >
-              <Share2 className="h-5 w-5" />
+              <Share2 className="h-4 w-4" />
               Partager
             </button>
           </div>
@@ -263,60 +258,58 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
 
         {/* Warning */}
         {timeRemaining < 12 && timeRemaining > 0 && !isExpired && (
-          <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mb-8 flex gap-3">
-            <span className="text-2xl">⏰</span>
+          <div className="bg-slate-50 border border-slate-200 p-4 mb-12 flex gap-4">
+            <span className="text-lg font-light">⏰</span>
             <div>
-              <p className="font-bold text-orange-900">Attention!</p>
-              <p className="text-sm text-orange-800">Ce lien expire dans {timeRemaining}h</p>
+              <p className="font-normal text-slate-900 text-sm">Attention</p>
+              <p className="text-xs text-slate-600">Ce lien expire dans {timeRemaining}h</p>
             </div>
           </div>
         )}
 
         {/* Photos Grid */}
         <div>
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Galerie</h3>
+          <h2 className="text-xs font-normal text-slate-600 mb-6 tracking-wide">GALERIE</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {share.selected_photos.map((photo) => (
               <div 
                 key={photo._id} 
-                className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden hover:border-slate-400 hover:shadow-lg transition-all group"
+                className="bg-white border border-slate-200 overflow-hidden group hover:border-slate-400 transition-colors"
               >
-                {/* Thumbnail */}
                 <div className="relative bg-slate-100 aspect-square overflow-hidden">
                   <img
                     src={`http://localhost:8000/api/v1/photos/${photo._id}/thumbnail`}
-                    alt={photo.filename}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    alt="Photo galerie"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
                   {downloadedPhotos.has(photo._id) && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
-                      <CheckCircle className="h-8 w-8 text-green-400" />
+                      <CheckCircle className="h-6 w-6 text-white" />
                     </div>
                   )}
                 </div>
-
-                {/* Info & Action */}
                 <div className="p-4">
                   <button
                     onClick={() => downloadPhoto(photo._id, photo.filename)}
                     disabled={downloading === photo._id || isExpired}
-                    className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
+                    className="w-full py-2 bg-slate-900 text-white text-xs font-normal hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {downloading === photo._id ? (
                       <>
-                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                        <span className="hidden sm:inline">Téléchargement</span>
+                        <div className="animate-spin h-3 w-3 border border-white border-t-transparent rounded-full"></div>
+                        <span className="hidden sm:inline">Télé.</span>
                       </>
                     ) : downloadedPhotos.has(photo._id) ? (
                       <>
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">Téléchargée</span>
+                        <CheckCircle className="h-3 w-3" />
+                        <span className="hidden sm:inline">OK</span>
                       </>
                     ) : (
                       <>
-                        <Download className="h-4 w-4 group-hover/btn:scale-125 transition-transform" />
+                        <Download className="h-3 w-3" />
                         <span className="hidden sm:inline">Télécharger</span>
+                        <span className="sm:hidden">↓</span>
                       </>
                     )}
                   </button>
@@ -327,10 +320,9 @@ export default function ShareGallery({ shareCode }: { shareCode: string }) {
         </div>
 
         {/* Footer */}
-        <div className="mt-16 pt-8 border-t-2 border-slate-200 text-center text-sm text-slate-600">
-          <p className="font-medium">
-            📸 Photos haute qualité • ✓ Téléchargement sécurisé • {!isExpired && `⏱️ ${timeRemaining}h disponible`}
-          </p>
+        <div className="mt-16 pt-8 border-t border-slate-100 text-center text-xs text-slate-500 font-light space-y-1">
+          <p>PHOTOS HAUTE QUALITÉ • TÉLÉCHARGEMENT SÉCURISÉ</p>
+          {!isExpired && <p>ACCÈS DISPONIBLE {timeRemaining}H</p>}
         </div>
       </div>
     </div>
