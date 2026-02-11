@@ -6,21 +6,7 @@ import Kiosk from './pages/Kiosk'
 import Gallery from './pages/Gallery'
 import ShareGallery from './pages/ShareGallery'
 import AdminPanel from './pages/AdminPanel'
-import AdminLogin from './pages/AdminLogin'
-import AdminDashboard from './pages/AdminDashboard'
-import AdminEvents from './pages/AdminEvents'
-import AdminPhotos from './pages/AdminPhotos'
-import AdminStatistics from './pages/AdminStatistics'
 import './App.css'
-
-// Protected route component for admin pages
-function ProtectedRoute({ element }: { element: React.ReactElement }) {
-  const token = localStorage.getItem('admin_token')
-  if (!token) {
-    return <Navigate to="/admin/login" replace />
-  }
-  return element
-}
 
 // Wrapper pour extraire le shareCode depuis les params
 function ShareGalleryWrapper() {
@@ -44,13 +30,8 @@ function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/share/:shareCode" element={<ShareGalleryWrapper />} />
         
-        {/* Admin Routes */}
+        {/* Admin Panel */}
         <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
-        <Route path="/admin/events" element={<ProtectedRoute element={<AdminEvents />} />} />
-        <Route path="/admin/photos" element={<ProtectedRoute element={<AdminPhotos />} />} />
-        <Route path="/admin/statistics" element={<ProtectedRoute element={<AdminStatistics />} />} />
       </Routes>
     </BrowserRouter>
   )
