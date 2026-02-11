@@ -231,59 +231,93 @@ function Kiosk() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
+      <header className="bg-white border-b-2 border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-light text-slate-900 tracking-tight">OWEN'SNAP</h1>
-            <p className="text-xs text-slate-500 font-normal mt-1">Kiosque photos</p>
+            <h1 className="text-5xl font-light text-slate-900 tracking-tight">OWEN'SNAP</h1>
+            <p className="text-sm text-slate-600 font-normal mt-1">Kiosque photos</p>
           </div>
           <button 
             onClick={() => navigate('/')} 
-            className="text-xs text-slate-600 hover:text-slate-900 font-normal tracking-wide"
+            className="text-sm text-slate-600 hover:text-slate-900 font-normal tracking-wide"
           >
             RETOUR
           </button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!cameraActive ? (
           /* SETUP PHASE */
-          <div className="flex items-center justify-center min-h-[500px]">
-            <div className="w-full max-w-md">
-              <div className="bg-white border border-slate-200 p-12">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-light text-slate-900 tracking-tight mb-2">Retrouvez vos photos</h2>
-                  <p className="text-sm text-slate-600 font-normal">Reconnaissance faciale en direct</p>
-                </div>
-                
-                <div className="space-y-4 mb-6">
-                  <label className="block">
-                    <span className="text-xs text-slate-700 font-normal tracking-wide mb-2 block">CODE ÉVÉNEMENT</span>
-                    <input
-                      type="text"
-                      placeholder="Exemple: JK0LHAWK"
-                      value={eventCode}
-                      onChange={(e) => setEventCode(e.target.value.toUpperCase())}
-                      onKeyPress={(e) => e.key === 'Enter' && startCamera()}
-                      className="w-full px-4 py-3 border border-slate-300 text-sm font-mono focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all"
-                    />
-                  </label>
-                </div>
-                
-                {error && (
-                  <div className="mb-6 bg-slate-50 border border-slate-200 p-4">
-                    <p className="text-sm text-slate-900">{error}</p>
+          <div className="grid md:grid-cols-2 gap-16 items-center min-h-[500px]">
+            {/* Left Section */}
+            <div>
+              <h2 className="text-6xl font-light text-slate-900 tracking-tight mb-4">Retrouvez vos photos</h2>
+              <p className="text-xl text-slate-600 font-normal mb-12 leading-relaxed">Reconnaissance faciale en direct pour localiser vos souvenirs instantanément.</p>
+              
+              <div className="space-y-6">
+                <div className="flex gap-4 items-start">
+                  <div className="flex-shrink-0 w-12 h-12 bg-slate-100 border border-slate-300 rounded-lg flex items-center justify-center">
+                    <span className="text-sm font-light text-slate-700">1</span>
                   </div>
-                )}
+                  <div>
+                    <h3 className="text-lg font-light text-slate-900">Entrez le code</h3>
+                    <p className="text-base text-slate-600 font-normal mt-1">Trouvez le code événement sur place</p>
+                  </div>
+                </div>
                 
-                <button 
-                  onClick={startCamera} 
-                  disabled={!eventCode.trim() || loading}
-                  className="w-full py-3 bg-slate-900 text-white font-normal text-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Vérification...' : 'Démarrer la caméra'}
-                </button>
+                <div className="flex gap-4 items-start">
+                  <div className="flex-shrink-0 w-12 h-12 bg-slate-100 border border-slate-300 rounded-lg flex items-center justify-center">
+                    <span className="text-sm font-light text-slate-700">2</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-light text-slate-900">Démarrez la caméra</h3>
+                    <p className="text-base text-slate-600 font-normal mt-1">Scannez votre visage face à l'écran</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-4 items-start">
+                  <div className="flex-shrink-0 w-12 h-12 bg-slate-100 border border-slate-300 rounded-lg flex items-center justify-center">
+                    <span className="text-sm font-light text-slate-700">3</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-light text-slate-900">Téléchargez</h3>
+                    <p className="text-base text-slate-600 font-normal mt-1">Obtenez votre code de partage en 48h</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Section - Form */}
+            <div className="bg-white border-2 border-slate-800 p-8 h-fit">
+              <label className="block mb-6">
+                <span className="text-sm text-slate-800 font-normal tracking-wide mb-2 block uppercase">Code événement</span>
+                <input
+                  type="text"
+                  placeholder="Exemple: JK0LHAWK"
+                  value={eventCode}
+                  onChange={(e) => setEventCode(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === 'Enter' && startCamera()}
+                  className="w-full px-4 py-3 border-2 border-slate-700 text-base font-mono focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all"
+                />
+              </label>
+              
+              {error && (
+                <div className="mb-6 bg-slate-50 border-2 border-slate-800 p-3 rounded">
+                  <p className="text-sm text-slate-900">{error}</p>
+                </div>
+              )}
+              
+              <button 
+                onClick={startCamera} 
+                disabled={!eventCode.trim() || loading}
+                className="w-full py-3 bg-slate-900 text-white font-normal text-base hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-4 font-light"
+              >
+                {loading ? 'Vérification...' : 'Démarrer la caméra'}
+              </button>
+
+              <div className="bg-slate-50 border-2 border-slate-800 p-4 rounded">
+                <p className="text-sm text-slate-700 font-normal leading-relaxed"><span className="font-light">💡 Conseil:</span> Bonne lumière frontale et position faciale directe pour une reconnaissance optimale.</p>
               </div>
             </div>
           </div>
@@ -321,7 +355,7 @@ function Kiosk() {
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center backdrop-blur-sm">
                         <div className="text-center">
                           <div className="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-3"></div>
-                          <p className="text-white text-sm font-normal">Recherche en cours...</p>
+                          <p className="text-white text-base font-normal">Recherche en cours...</p>
                         </div>
                       </div>
                     )}
@@ -334,17 +368,17 @@ function Kiosk() {
               {/* Side Info */}
               <div className="space-y-4">
                 <div className="bg-white border border-slate-200 p-6">
-                  <p className="text-xs text-slate-600 font-normal tracking-wide mb-3">ÉVÉNEMENT</p>
-                  <p className="text-lg font-mono text-slate-900">{eventCode}</p>
-                  <div className="mt-4 pt-4 border-t border-slate-200 space-y-1 text-xs text-slate-600 font-normal">
+                  <p className="text-sm text-slate-600 font-normal tracking-wide mb-3">ÉVÉNEMENT</p>
+                  <p className="text-xl font-mono text-slate-900">{eventCode}</p>
+                  <div className="mt-4 pt-4 border-t border-slate-200 space-y-1 text-sm text-slate-600 font-normal">
                     <p>✓ Caméra activée</p>
                     <p>✓ Prêt à scanner</p>
                   </div>
                 </div>
 
                 <div className="bg-slate-50 border border-slate-200 p-6">
-                  <p className="text-xs text-slate-600 font-normal tracking-wide mb-3">STATISTIQUES</p>
-                  <div className="space-y-2 text-sm">
+                  <p className="text-sm text-slate-600 font-normal tracking-wide mb-3">STATISTIQUES</p>
+                  <div className="space-y-2 text-base">
                     <div className="flex justify-between">
                       <span className="text-slate-600">Résultats</span>
                       <span className="font-normal text-slate-900">{searchResults.length}</span>
@@ -363,20 +397,20 @@ function Kiosk() {
               <button 
                 onClick={captureAndSearch} 
                 disabled={loading}
-                className="flex-1 py-3 bg-slate-900 text-white font-normal text-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-slate-900 text-white font-normal text-base hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? 'Recherche...' : 'Capturer et chercher'}
               </button>
               <button 
                 onClick={stopCamera} 
-                className="px-8 py-3 border border-slate-300 bg-white text-slate-900 font-normal text-sm hover:bg-slate-50 transition-colors"
+                className="px-8 py-3 border border-slate-300 bg-white text-slate-900 font-normal text-base hover:bg-slate-50 transition-colors"
               >
                 Annuler
               </button>
             </div>
 
             {error && (
-              <div className="bg-slate-50 border border-slate-200 p-4">
+              <div className="bg-slate-50 border-2 border-slate-800 p-4">
                 <p className="text-sm text-slate-900">{error}</p>
               </div>
             )}
@@ -389,8 +423,8 @@ function Kiosk() {
             {/* Results Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50 border border-slate-200 p-8">
               <div>
-                <h2 className="text-2xl font-light text-slate-900 tracking-tight">{searchResults.length} photo{searchResults.length > 1 ? 's' : ''} trouvée{searchResults.length > 1 ? 's' : ''}</h2>
-                <p className="text-sm text-slate-600 font-normal mt-2">Ajustez le seuil de similarité pour affiner les résultats</p>
+                <h2 className="text-3xl font-light text-slate-900 tracking-tight">{searchResults.length} photo{searchResults.length > 1 ? 's' : ''} trouvée{searchResults.length > 1 ? 's' : ''}</h2>
+                <p className="text-base text-slate-600 font-normal mt-2">Ajustez le seuil de similarité pour affiner les résultats</p>
               </div>
             </div>
 
@@ -398,8 +432,8 @@ function Kiosk() {
             <div className="bg-white border border-slate-200 p-6">
               <label className="block mb-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="font-normal text-slate-900 text-sm">Seuil de similarité</span>
-                  <span className="text-lg font-mono text-slate-900 px-3 py-1 bg-slate-50 border border-slate-200">{(similarityThreshold * 100).toFixed(0)}%</span>
+                  <span className="font-normal text-slate-900 text-base">Seuil de similarité</span>
+                  <span className="text-xl font-mono text-slate-900 px-3 py-1 bg-slate-50 border-2 border-slate-800">{(similarityThreshold * 100).toFixed(0)}%</span>
                 </div>
                 <input 
                   type="range" 
@@ -411,14 +445,14 @@ function Kiosk() {
                   className="w-full h-1 bg-slate-300 rounded-full appearance-none cursor-pointer accent-slate-900"
                 />
               </label>
-              <p className="text-xs text-slate-600 font-normal">
+              <p className="text-sm text-slate-600 font-normal">
                 {searchResults.filter(r => r.similarity >= similarityThreshold).length} photo{searchResults.filter(r => r.similarity >= similarityThreshold).length !== 1 ? 's' : ''} affichée{searchResults.filter(r => r.similarity >= similarityThreshold).length !== 1 ? 's' : ''}
               </p>
             </div>
 
             {/* Photos Grid */}
             <div>
-              <h3 className="text-xs text-slate-600 font-normal mb-6 tracking-wide">GALERIE</h3>
+              <h3 className="text-sm text-slate-600 font-normal mb-6 tracking-wide uppercase">Galérie</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {searchResults.filter(r => r.similarity >= similarityThreshold).map((result, index) => (
                   <div 
@@ -483,14 +517,14 @@ function Kiosk() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white border border-slate-200 p-12">
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-light text-slate-900 tracking-tight mb-2">Code de partage généré</h2>
-                <p className="text-sm text-slate-600 font-normal">Partagez ce code avec vos proches</p>
+                <h2 className="text-4xl font-light text-slate-900 tracking-tight mb-2">Code de partage généré</h2>
+                <p className="text-lg text-slate-600 font-normal">Partagez ce code avec vos proches</p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-12 mb-12">
                 {/* QR Code */}
                 <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 p-8">
-                  <h3 className="font-normal text-slate-900 mb-6 text-sm">SCANNER LE CODE QR</h3>
+                  <h3 className="font-normal text-slate-900 mb-6 text-base">SCANNER LE CODE QR</h3>
                   <div className="bg-white p-4 border border-slate-900">
                     <canvas 
                       ref={qrCanvasRef} 
@@ -503,9 +537,9 @@ function Kiosk() {
                 {/* Share Info */}
                 <div className="space-y-4">
                   {/* Code Display */}
-                  <div className="bg-slate-50 border border-slate-200 p-6">
-                    <p className="text-xs text-slate-600 font-normal mb-3 tracking-wide">CODE DE PARTAGE</p>
-                    <p className="text-3xl font-mono text-slate-900 text-center py-4 px-4 border border-slate-200 bg-white mb-4">
+                  <div className="bg-slate-50 border-2 border-slate-800 p-6">
+                    <p className="text-sm text-slate-600 font-normal mb-3 tracking-wide">CODE DE PARTAGE</p>
+                    <p className="text-4xl font-mono text-slate-900 text-center py-4 px-4 border-2 border-slate-800 bg-white mb-4">
                       {shareData.share_code}
                     </p>
                     <button
@@ -513,7 +547,7 @@ function Kiosk() {
                         navigator.clipboard.writeText(shareData.share_code);
                         alert('Copié');
                       }}
-                      className="w-full py-2 bg-slate-900 text-white font-normal text-xs hover:bg-black transition-all"
+                      className="w-full py-2 bg-slate-900 text-white font-normal text-sm hover:bg-black transition-all"
                     >
                       Copier le code
                     </button>
@@ -521,21 +555,21 @@ function Kiosk() {
 
                   {/* Share Stats */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 border border-slate-200 p-4 text-center">
-                      <p className="text-2xl font-light text-slate-900">{shareData.photos_count}</p>
-                      <p className="text-xs text-slate-600 mt-1 font-normal tracking-wide">PHOTOS</p>
+                    <div className="bg-slate-50 border-2 border-slate-800 p-4 text-center">
+                      <p className="text-3xl font-light text-slate-900">{shareData.photos_count}</p>
+                      <p className="text-sm text-slate-600 mt-1 font-normal tracking-wide">PHOTOS</p>
                     </div>
-                    <div className="bg-slate-50 border border-slate-200 p-4 text-center">
-                      <p className="text-2xl font-light text-slate-900">48</p>
-                      <p className="text-xs text-slate-600 mt-1 font-normal tracking-wide">HEURES</p>
+                    <div className="bg-slate-50 border-2 border-slate-800 p-4 text-center">
+                      <p className="text-3xl font-light text-slate-900">48</p>
+                      <p className="text-sm text-slate-600 mt-1 font-normal tracking-wide">HEURES</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Photos Preview */}
-              <div className="bg-slate-50 border border-slate-200 p-6 mb-8">
-                <h3 className="font-normal text-slate-900 mb-4 text-sm">PHOTOS ({selectedPhotos.size})</h3>
+              <div className="bg-slate-50 border-2 border-slate-800 p-6 mb-8">
+                <h3 className="font-normal text-slate-900 mb-4 text-base">PHOTOS ({selectedPhotos.size})</h3>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                   {searchResults.filter(r => selectedPhotos.has(r.photo_id)).map((photo, idx) => (
                     <div key={photo.photo_id} className="relative">
@@ -559,7 +593,7 @@ function Kiosk() {
                     const shareUrl = `${window.location.origin}/share/${shareData.share_code}`
                     window.open(shareUrl, '_blank')
                   }}
-                  className="py-3 bg-slate-900 text-white font-normal text-sm hover:bg-black transition-all"
+                  className="py-3 bg-slate-900 text-white font-normal text-base hover:bg-black transition-all"
                 >
                   Ouvrir le lien
                 </button>
@@ -569,13 +603,13 @@ function Kiosk() {
                     navigator.clipboard.writeText(text)
                     alert('Copié')
                   }}
-                  className="py-3 border border-slate-300 bg-white text-slate-900 font-normal text-sm hover:bg-slate-50 transition-all"
+                  className="py-3 border border-slate-300 bg-white text-slate-900 font-normal text-base hover:bg-slate-50 transition-all"
                 >
                   Copier tout
                 </button>
                 <button 
                   onClick={resetAndStartOver}
-                  className="py-3 border border-slate-300 bg-white text-slate-900 font-normal text-sm hover:bg-slate-50 transition-all"
+                  className="py-3 border border-slate-300 bg-white text-slate-900 font-normal text-base hover:bg-slate-50 transition-all"
                 >
                   Nouveau scan
                 </button>

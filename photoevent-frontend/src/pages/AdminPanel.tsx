@@ -502,17 +502,17 @@ export default function AdminPanel() {
                             </td>
                             <td className="text-center py-3 px-3 text-gray-900">{event.photo_count}</td>
                             <td className="text-center py-3 px-3">
-                              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">
+                              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-light">
                                 {event.faces_count}
                               </span>
                             </td>
                             <td className="text-center py-3 px-3">
-                              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-light">
                                 {event.downloads_count || 0}
                               </span>
                             </td>
                             <td className="text-right py-3 px-3">
-                              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                              <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-light">
                                 {event.storage_mb} MB
                               </span>
                             </td>
@@ -532,8 +532,8 @@ export default function AdminPanel() {
                   </table>
                 </div>
                 {stats?.avg_photo_size_mb && (
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                    <p className="text-blue-900">
+                  <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                    <p className="text-slate-900">
                       <strong>Moyenne globale:</strong> {stats.avg_photo_size_mb} MB par photo
                       {stats.avg_photo_size_mb > 2 && (
                         <span className="ml-2 text-orange-600">⚠️ Considérer l'augmentation de la compression</span>
@@ -565,7 +565,7 @@ export default function AdminPanel() {
                               📸 {event.photo_count || 0}
                             </span>
                             {event.faces_count !== undefined && (
-                              <span className="text-xs font-medium text-purple-700 bg-purple-100 px-3 py-1 rounded-full block">
+                              <span className="text-xs font-light text-slate-700 bg-slate-100 px-3 py-1 rounded-full block">
                                 👤 {event.faces_count}
                               </span>
                             )}
@@ -587,7 +587,7 @@ export default function AdminPanel() {
                     recentActivities.map((activity) => (
                       <div
                         key={activity.id}
-                        className="p-3 border-l-4 border-blue-500 bg-blue-50 rounded"
+                        className="p-3 border-l-4 border-slate-400 bg-slate-50 rounded"
                       >
                         <p className="text-sm text-gray-900">{activity.action}</p>
                         <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString('fr-FR')}</p>
@@ -694,11 +694,11 @@ export default function AdminPanel() {
                       }}
                     >
                       {/* Header avec nom et date */}
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-black transition-colors truncate">
+                      <div className="bg-white p-4 border-b border-slate-200">
+                        <h3 className="font-light text-gray-900 group-hover:text-black transition-colors truncate">
                           {event.name}
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">{event.date}</p>
+                        <p className="text-xs text-slate-500 mt-1">{event.date}</p>
                       </div>
 
                       {/* Contenu */}
@@ -716,9 +716,9 @@ export default function AdminPanel() {
                           >
                             <code className="text-sm font-mono text-gray-700 truncate">{event.code}</code>
                             {copiedCode === event.code ? (
-                              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 ml-2" />
+                              <CheckCircle className="h-4 w-4 text-slate-900 flex-shrink-0 ml-2" />
                             ) : (
-                              <Copy className="h-4 w-4 text-gray-400 group-hover/copy:text-gray-600 flex-shrink-0 ml-2" />
+                              <Copy className="h-4 w-4 text-slate-400 group-hover/copy:text-slate-600 flex-shrink-0 ml-2" />
                             )}
                           </button>
                         </div>
@@ -726,19 +726,19 @@ export default function AdminPanel() {
                         {/* Stats compactes */}
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600 flex items-center gap-2">
-                              <ImageIcon className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm text-slate-600 flex items-center gap-2">
+                              <ImageIcon className="h-4 w-4 text-slate-600" />
                               Photos
                             </span>
-                            <span className="text-lg font-bold text-blue-600">{photosCount}</span>
+                            <span className="text-lg font-light text-gray-900">{photosCount}</span>
                           </div>
                           {event.faces_count !== undefined && (
                             <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600 flex items-center gap-2">
+                              <span className="text-sm text-slate-600 flex items-center gap-2">
                                 <span className="text-sm">👤</span>
                                 Visages
                               </span>
-                              <span className="text-lg font-bold text-purple-600">{event.faces_count}</span>
+                              <span className="text-lg font-light text-gray-900">{event.faces_count}</span>
                             </div>
                           )}
                         </div>
@@ -808,17 +808,17 @@ export default function AdminPanel() {
                       </button>
 
                       {eventDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
                           {/* Recherche */}
-                          <div className="sticky top-0 bg-white border-b border-gray-200 p-3">
+                          <div className="sticky top-0 bg-white border-b border-slate-200 p-3">
                             <div className="relative">
-                              <Search className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
+                              <Search className="absolute left-2 top-2 h-4 w-4 text-slate-400" />
                               <input
                                 type="text"
                                 placeholder="Rechercher..."
                                 value={eventSearchQuery}
                                 onChange={(e) => setEventSearchQuery(e.target.value)}
-                                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black"
                                 onClick={(e) => e.stopPropagation()}
                               />
                             </div>
@@ -843,19 +843,19 @@ export default function AdminPanel() {
                                       setEventDropdownOpen(false);
                                       setEventSearchQuery('');
                                     }}
-                                    className={`w-full px-4 py-3 text-left border-b border-gray-100 hover:bg-blue-50 transition-colors last:border-b-0 ${
-                                      isSelected ? 'bg-blue-100' : ''
+                                    className={`w-full px-4 py-3 text-left border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-b-0 ${
+                                      isSelected ? 'bg-slate-100' : ''
                                     }`}
                                   >
                                     <div className="flex items-center justify-between">
                                       <div>
-                                        <p className="font-medium text-gray-900">{event.name}</p>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="font-light text-gray-900">{event.name}</p>
+                                        <p className="text-xs text-slate-500 mt-1">
                                           {event.code} • {event.photo_count || 0} photos
                                         </p>
                                       </div>
                                       {isSelected && (
-                                        <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                                        <CheckCircle className="h-5 w-5 text-slate-900 flex-shrink-0" />
                                       )}
                                     </div>
                                   </button>
@@ -923,7 +923,7 @@ export default function AdminPanel() {
                   </div>
 
                   {!selectedEvent && (
-                    <p className="text-xs text-red-600 mt-2">Sélectionner un événement</p>
+                    <p className="text-xs text-slate-600 mt-2">Sélectionner un événement</p>
                   )}
                 </div>
               </div>
@@ -958,16 +958,16 @@ export default function AdminPanel() {
                   </div>
 
                   {selectedPhotos.size > 0 && (
-                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
                       <div className="flex justify-between items-center">
-                        <p className="text-sm text-blue-900 font-medium">
+                        <p className="text-sm text-slate-900 font-light">
                           {selectedPhotos.size} photo(s) sélectionnée(s)
                         </p>
                         <div className="flex gap-2">
                           <select
                             value={moveToEvent}
                             onChange={(e) => setMoveToEvent(e.target.value)}
-                            className="px-3 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-3 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
                           >
                             <option value="">Ajouter à...</option>
                             {events
@@ -981,13 +981,13 @@ export default function AdminPanel() {
                           <button
                             onClick={movePhotosToEvent}
                             disabled={!moveToEvent}
-                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-3 py-1 bg-black text-white rounded text-sm hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Ajouter
                           </button>
                           <button
                             onClick={deleteSelectedPhotos}
-                            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                            className="px-3 py-1 bg-slate-600 text-white rounded text-sm hover:bg-slate-700"
                           >
                             Supprimer
                           </button>
@@ -1014,8 +1014,8 @@ export default function AdminPanel() {
                             className="w-full h-40 object-cover rounded-lg"
                           />
                           {photo.faces_detected !== undefined && (
-                            <div className="absolute bottom-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                              👤 {photo.faces_detected}
+                            <div className="absolute bottom-2 left-2 bg-slate-700 text-white text-xs px-2 py-1 rounded-full font-light">
+                              {photo.faces_detected}
                             </div>
                           )}
                           <div
@@ -1036,7 +1036,7 @@ export default function AdminPanel() {
                               e.stopPropagation();
                               deletePhoto(photo._id);
                             }}
-                            className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 text-white p-1 rounded"
+                            className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-600 text-white p-1 rounded"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -1069,14 +1069,14 @@ export default function AdminPanel() {
                               </p>
                             </div>
                             {photo.faces_detected !== undefined && (
-                              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
-                                👤 {photo.faces_detected}
+                              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-light">
+                                {photo.faces_detected}
                               </span>
                             )}
                           </div>
                           <button
                             onClick={() => deletePhoto(photo._id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-4"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-600 hover:text-slate-700 ml-4"
                           >
                             <Trash2 className="h-5 w-5" />
                           </button>
